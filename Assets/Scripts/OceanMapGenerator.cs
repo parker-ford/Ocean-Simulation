@@ -30,6 +30,8 @@ public class OceanMapGenerator : MonoBehaviour
     [NonSerialized]
     public ComputeBuffer butterfly_buffer;
 
+    private ComputeBuffer bit_reversed_buffer;
+
     void GenerateInitialFrequencyValues()
     {
         initialFrequencyShader.SetInt("_L", L);
@@ -50,6 +52,28 @@ public class OceanMapGenerator : MonoBehaviour
         butterflyShader.Dispatch(0, 8, mapResolution, 1);
     }
 
+    void GenerateBitReverseIndex()
+    {
+        int[] reversedBits = new int[(int)mapResolution];
+        int bits = (int)Mathf.Log(mapResolution, 2);
+        for (int num = 0; num < mapResolution; num++)
+        {
+            int reversed = 0;
+            int temp = num;
+            for (int i = 0; i < bits; i++)
+            {
+                reversed <<= 1;
+
+                reversed |= (temp & 1);
+
+                temp >>= 1;
+            }
+            reversedBits[num] = reversed;
+            // Debug.Log(reversed + " " + Convert.ToString(reversed, 2));
+        }
+        bit_reversed_buffer.SetData(reversedBits);
+    }
+
     void Awake()
     {
         //Initialize Buffers
@@ -59,6 +83,10 @@ public class OceanMapGenerator : MonoBehaviour
         htk_dy_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 2);
         htk_dz_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 2);
         butterfly_buffer = new ComputeBuffer(8 * mapResolution, sizeof(float) * 4);
+        bit_reversed_buffer = new ComputeBuffer(mapResolution, sizeof(int));
+
+        //Generate bit reversed indices buffer
+        GenerateBitReverseIndex();
 
         //Initialize Shader varialbes
         initialFrequencyShader.SetFloat("resolution", mapResolution);
@@ -74,17 +102,20 @@ public class OceanMapGenerator : MonoBehaviour
 
         butterflyShader.SetFloat("resolution", mapResolution);
         butterflyShader.SetBuffer(0, "butterfly_buffer", butterfly_buffer);
+        butterflyShader.SetBuffer(0, "bit_reversed_buffer", bit_reversed_buffer);
+
 
         //Generate Butterfly Buffer
         GenerateButterflyValues();
 
-        //Generate Initial Fequencies
-        GenerateInitialFrequencyValues();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //Generate Initial Fequencies
+        GenerateInitialFrequencyValues();
+
         //Generate Time Frequencies
         GenerateTimeFrequencyValues();
     }
@@ -96,6 +127,8 @@ public class OceanMapGenerator : MonoBehaviour
         htk_dx_buffer.Release();
         htk_dy_buffer.Release();
         htk_dz_buffer.Release();
+        butterfly_buffer.Release();
+        bit_reversed_buffer.Release();
     }
 
 }

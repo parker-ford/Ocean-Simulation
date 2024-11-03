@@ -1,4 +1,4 @@
-Shader "Parker/ComputeFloat2"
+Shader "Parker/ComputeButterfly"
 {
     Properties
     {
@@ -45,8 +45,9 @@ Shader "Parker/ComputeFloat2"
             fixed4 frag (v2f i) : SV_Target
             {
                 uint2 id = i.uv * resolution;
-                id.x = id.x / (resolution / 64.0);
-                int index = id.x + id.y * resolution;
+
+                id.x = id.x / (resolution / 8.0);
+                int index = id.x + id.y * 8;
                 float4 val = viewBuffer[index];
                 return val;
             }
