@@ -1,0 +1,89 @@
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+#include "../Includes/common.cginc"
+#include "../Includes/noise.cginc"
+
+struct Pixel {
+    float4 color;
+};
+
+struct Complex {
+    float real;
+    float im;
+};
+
+Complex mul(Complex c0, Complex c1){
+    Complex c;
+    c.real = c0.real * c1.real - c0.im * c1.im;
+    c.im = c0.real * c1.im + c0.im * c1.real;
+    return c;
+}
+
+Complex add(Complex c0, Complex c1) {
+    Complex c;
+    c.real = c0.real + c1.real;
+    c.im = c0.im + c1.im;
+    return c;
+}
+
+Complex conj(Complex c){
+    Complex c_conj;
+    c_conj.real = c.real;
+    c_conj.im = -c.im;
+    return c_conj;
+}
+
+RWStructuredBuffer<float2> htk_dx_buffer;
+RWStructuredBuffer<float2> htk_dy_buffer;
+RWStructuredBuffer<float2> htk_dz_buffer;
+
+StructuredBuffer<float2> h0k_buffer;
+StructuredBuffer<float2> h0k_inv_buffer;
+
+float resolution;
+int _L;
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+
+    float2 uv = float2(id.xy) / resolution;
+    float2 x = float2(id.xy) - resolution / 2.0;
+    float2 k = float2(2.0 * PI * x.x / _L, 2.0 * PI * x.y / _L);
+
+    float mag = length(k);
+    if(mag < 0.00001) mag = 0.00001;
+
+
+    float w = sqrt(GRAVITY * mag);
+
+    float2 h0k_val = h0k_buffer[id.x + id.y * resolution];
+    float2 h0k_inv_val = h0k_inv_buffer[id.x + id.y * resolution];
+
+    Complex fourier_cmp = {h0k_val.x, h0k_val.y};
+
+    Complex fourier_inv = {h0k_inv_val.x, h0k_inv_val.y};
+    Complex fourier_cmp_conj = conj(fourier_inv);
+
+    float cos_w_t = cos(w * _Time.y);
+    float sin_w_t = sin(w * _Time.y);
+
+    Complex exp_iwt = {cos_w_t, sin_w_t};
+    Complex exp_iwt_inv = {cos_w_t, -sin_w_t};
+
+    //dy
+    Complex htk_dy = add(mul(fourier_cmp, exp_iwt), mul(fourier_cmp_conj, exp_iwt_inv));
+    htk_dy_buffer[id.x + id.y * resolution] = float2(htk_dy.real, htk_dy.im);
+
+    //dx
+    Complex dx = {0.0, -k.x/mag};
+    Complex htk_dx = mul(dx, htk_dy);
+    htk_dx_buffer[id.x + id.y * resolution] = float2(htk_dx.real, htk_dx.im);
+
+    //dz
+    Complex dy = {0.0, -k.y/mag};
+    Complex htk_dz = mul(dy, htk_dy);
+    htk_dz_buffer[id.x + id.y * resolution] = float2(htk_dz.real, htk_dz.im);
+    
+}

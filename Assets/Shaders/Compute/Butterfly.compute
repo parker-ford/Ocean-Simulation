@@ -1,0 +1,44 @@
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+#include "../Includes/common.cginc"
+#include "../Includes/noise.cginc"
+
+struct Complex {
+    float real;
+    float im;
+};
+
+Complex mul(Complex c0, Complex c1){
+    Complex c;
+    c.real = c0.real * c1.real - c0.im * c1.im;
+    c.im = c0.real * c1.im + c0.im * c1.real;
+    return c;
+}
+
+Complex add(Complex c0, Complex c1) {
+    Complex c;
+    c.real = c0.real + c1.real;
+    c.im = c0.im + c1.im;
+    return c;
+}
+
+Complex conj(Complex c){
+    Complex c_conj;
+    c_conj.real = c.real;
+    c_conj.im = -c.im;
+    return c_conj;
+}
+
+RWStructuredBuffer<float4> butterfly_buffer;
+float resolution;
+
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x + id.y * 8;
+
+    butterfly_buffer[index] = float4((float)index / (resolution * 8), 0, 0, 1);
+   
+}

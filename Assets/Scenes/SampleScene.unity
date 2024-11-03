@@ -154,6 +154,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapResolution: 512
   initialFrequencyShader: {fileID: 7200000, guid: 3c171d2042d787641b496cf5bb18137c, type: 3}
+  timeFrequencyShader: {fileID: 7200000, guid: 6cc8aab77af15134d9fe7aa25a43865b, type: 3}
+  butterflyShader: {fileID: 7200000, guid: 6aab8c129b25f614b84d1651dca3e9f6, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
   L: 1000
