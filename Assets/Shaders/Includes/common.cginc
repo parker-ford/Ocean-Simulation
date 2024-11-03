@@ -4,6 +4,7 @@
 #define EARTH_RADIUS 6371000.0
 #define MAX_VIEW_DISTANCE 50000.0
 #define PI 3.14159265359
+#define GRAVITY 9.81
 
 //Common Parameters
 uint _Frame;
