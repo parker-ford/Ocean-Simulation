@@ -85,36 +85,52 @@ public class OceanMapGenerator : MonoBehaviour
     void GeneratePingPongValues()
     {
 
-        fillPingPongShader.SetTexture(0, "freqData", htk_dy_buffer);
-        fillPingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
-
-
-        int pingPong = 0;
-
-        pingPongShader.SetInt("_Direction", 0);
-        pingPongShader.SetInt("_PingPong", pingPong);
-
-        for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
+        for (int axis = 0; axis < 3; axis++)
         {
-            pingPongShader.SetInt("_Stage", i);
-            pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
-            pingPong = (pingPong + 1) % 2;
-            pingPongShader.SetInt("_PingPong", pingPong);
-        }
+            if (axis == 0)
+            {
+                fillPingPongShader.SetTexture(0, "freqData", htk_dx_buffer);
+            }
+            else if (axis == 1)
+            {
+                fillPingPongShader.SetTexture(0, "freqData", htk_dy_buffer);
+            }
+            else if (axis == 2)
+            {
+                fillPingPongShader.SetTexture(0, "freqData", htk_dz_buffer);
+            }
 
-        pingPongShader.SetInt("_Direction", 1);
+            fillPingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
 
-        for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
-        {
-            pingPongShader.SetInt("_Stage", i);
-            pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
-            pingPong = (pingPong + 1) % 2;
+
+            int pingPong = 0;
+
+            pingPongShader.SetInt("_Direction", 0);
             pingPongShader.SetInt("_PingPong", pingPong);
 
-        }
+            for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
+            {
+                pingPongShader.SetInt("_Stage", i);
+                pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+                pingPong = (pingPong + 1) % 2;
+                pingPongShader.SetInt("_PingPong", pingPong);
+            }
 
-        inversionShader.SetInt("_PingPong", pingPong);
-        inversionShader.Dispatch(0, mapResolution, mapResolution, 1);
+            pingPongShader.SetInt("_Direction", 1);
+
+            for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
+            {
+                pingPongShader.SetInt("_Stage", i);
+                pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+                pingPong = (pingPong + 1) % 2;
+                pingPongShader.SetInt("_PingPong", pingPong);
+
+            }
+
+            inversionShader.SetInt("_Axis", axis);
+            inversionShader.SetInt("_PingPong", pingPong);
+            inversionShader.Dispatch(0, mapResolution, mapResolution, 1);
+        }
 
     }
 
