@@ -6,7 +6,18 @@ using UnityEngine;
 public class OceanMapGenerator : MonoBehaviour
 {
 
-    public int mapResolution = 256;
+    public enum MapResolution
+    {
+        Res_64 = 64,
+        Res_124 = 124,
+        Res_256 = 256,
+        Res_512 = 512,
+        Res_1024 = 1024,
+        Res_2048 = 2048
+    }
+
+    public MapResolution mapResolution = MapResolution.Res_256;
+    private int resolution = 256;
     public ComputeShader initialFrequencyShader;
     public ComputeShader timeFrequencyShader;
     public ComputeShader butterflyShader;
@@ -47,25 +58,25 @@ public class OceanMapGenerator : MonoBehaviour
         initialFrequencyShader.SetFloat("_A", A);
         initialFrequencyShader.SetFloat("_WindSpeed", windSpeed);
         initialFrequencyShader.SetVector("_WindDirection", windDirection);
-        initialFrequencyShader.Dispatch(0, mapResolution, mapResolution, 1);
+        initialFrequencyShader.Dispatch(0, resolution, resolution, 1);
     }
 
     void GenerateTimeFrequencyValues()
     {
         timeFrequencyShader.SetInt("_L", L);
-        timeFrequencyShader.Dispatch(0, mapResolution, mapResolution, 1);
+        timeFrequencyShader.Dispatch(0, resolution, resolution, 1);
     }
 
     void GenerateButterflyValues()
     {
-        butterflyShader.Dispatch(0, (int)Mathf.Log(mapResolution, 2), mapResolution, 1);
+        butterflyShader.Dispatch(0, (int)Mathf.Log(resolution, 2), resolution, 1);
     }
 
     void GenerateBitReverseIndex()
     {
-        int[] reversedBits = new int[(int)mapResolution];
-        int bits = (int)Mathf.Log(mapResolution, 2);
-        for (int num = 0; num < mapResolution; num++)
+        int[] reversedBits = new int[(int)resolution];
+        int bits = (int)Mathf.Log(resolution, 2);
+        for (int num = 0; num < resolution; num++)
         {
             int reversed = 0;
             int temp = num;
@@ -100,7 +111,7 @@ public class OceanMapGenerator : MonoBehaviour
                 fillPingPongShader.SetTexture(0, "freqData", htk_dz_buffer);
             }
 
-            fillPingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+            fillPingPongShader.Dispatch(0, resolution, resolution, 1);
 
 
             int pingPong = 0;
@@ -108,20 +119,20 @@ public class OceanMapGenerator : MonoBehaviour
             pingPongShader.SetInt("_Direction", 0);
             pingPongShader.SetInt("_PingPong", pingPong);
 
-            for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
+            for (int i = 0; i < (int)MathF.Log(resolution, 2); i++)
             {
                 pingPongShader.SetInt("_Stage", i);
-                pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+                pingPongShader.Dispatch(0, resolution, resolution, 1);
                 pingPong = (pingPong + 1) % 2;
                 pingPongShader.SetInt("_PingPong", pingPong);
             }
 
             pingPongShader.SetInt("_Direction", 1);
 
-            for (int i = 0; i < (int)MathF.Log(mapResolution, 2); i++)
+            for (int i = 0; i < (int)MathF.Log(resolution, 2); i++)
             {
                 pingPongShader.SetInt("_Stage", i);
-                pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+                pingPongShader.Dispatch(0, resolution, resolution, 1);
                 pingPong = (pingPong + 1) % 2;
                 pingPongShader.SetInt("_PingPong", pingPong);
 
@@ -129,7 +140,7 @@ public class OceanMapGenerator : MonoBehaviour
 
             inversionShader.SetInt("_Axis", axis);
             inversionShader.SetInt("_PingPong", pingPong);
-            inversionShader.Dispatch(0, mapResolution, mapResolution, 1);
+            inversionShader.Dispatch(0, resolution, resolution, 1);
         }
 
     }
@@ -150,48 +161,49 @@ public class OceanMapGenerator : MonoBehaviour
 
     void Awake()
     {
+        resolution = (int)mapResolution;
         //Initialize Buffers
-        h0k_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.RGFloat);
-        h0k_inv_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.RGFloat);
-        htk_dx_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.RGFloat);
-        htk_dy_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.RGFloat);
-        htk_dz_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.RGFloat);
-        butterfly_buffer = CreateRenderTexture((int)Mathf.Log(mapResolution, 2), mapResolution, RenderTextureFormat.ARGBFloat);
-        bit_reversed_buffer = new ComputeBuffer(mapResolution, sizeof(int));
-        ping_pong0_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.ARGBFloat);
-        ping_pong1_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.ARGBFloat);
-        height_buffer = CreateRenderTexture(mapResolution, mapResolution, RenderTextureFormat.ARGBFloat);
+        h0k_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.RGFloat);
+        h0k_inv_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.RGFloat);
+        htk_dx_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.RGFloat);
+        htk_dy_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.RGFloat);
+        htk_dz_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.RGFloat);
+        butterfly_buffer = CreateRenderTexture((int)Mathf.Log(resolution, 2), resolution, RenderTextureFormat.ARGBFloat);
+        bit_reversed_buffer = new ComputeBuffer(resolution, sizeof(int));
+        ping_pong0_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.ARGBFloat);
+        ping_pong1_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.ARGBFloat);
+        height_buffer = CreateRenderTexture(resolution, resolution, RenderTextureFormat.ARGBFloat);
 
         //Generate bit reversed indices buffer
         GenerateBitReverseIndex();
 
         //Initialize Shader varialbes
-        initialFrequencyShader.SetFloat("resolution", mapResolution);
+        initialFrequencyShader.SetFloat("resolution", resolution);
         initialFrequencyShader.SetTexture(0, "h0k_buffer", h0k_buffer);
         initialFrequencyShader.SetTexture(0, "h0k_inv_buffer", h0k_inv_buffer);
 
-        timeFrequencyShader.SetFloat("resolution", mapResolution);
+        timeFrequencyShader.SetFloat("resolution", resolution);
         timeFrequencyShader.SetTexture(0, "h0k_buffer", h0k_buffer);
         timeFrequencyShader.SetTexture(0, "h0k_inv_buffer", h0k_inv_buffer);
         timeFrequencyShader.SetTexture(0, "htk_dx_buffer", htk_dx_buffer);
         timeFrequencyShader.SetTexture(0, "htk_dy_buffer", htk_dy_buffer);
         timeFrequencyShader.SetTexture(0, "htk_dz_buffer", htk_dz_buffer);
 
-        butterflyShader.SetFloat("resolution", mapResolution);
+        butterflyShader.SetFloat("resolution", resolution);
         butterflyShader.SetTexture(0, "butterfly_buffer", butterfly_buffer);
         butterflyShader.SetBuffer(0, "bit_reversed_buffer", bit_reversed_buffer);
 
-        pingPongShader.SetFloat("resolution", mapResolution);
+        pingPongShader.SetFloat("resolution", resolution);
         pingPongShader.SetTexture(0, "butterfly_buffer", butterfly_buffer);
         pingPongShader.SetTexture(0, "pingpong0", ping_pong0_buffer);
         pingPongShader.SetTexture(0, "pingpong1", ping_pong1_buffer);
 
-        inversionShader.SetFloat("resolution", mapResolution);
+        inversionShader.SetFloat("resolution", resolution);
         inversionShader.SetTexture(0, "pingpong0", ping_pong0_buffer);
         inversionShader.SetTexture(0, "pingpong1", ping_pong1_buffer);
         inversionShader.SetTexture(0, "height_buffer", height_buffer);
 
-        fillPingPongShader.SetFloat("resolution", mapResolution);
+        fillPingPongShader.SetFloat("resolution", resolution);
         fillPingPongShader.SetTexture(0, "pingpong", ping_pong0_buffer);
 
         //Generate Butterfly Buffer
