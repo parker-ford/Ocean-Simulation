@@ -10,6 +10,9 @@ public class OceanMapGenerator : MonoBehaviour
     public ComputeShader initialFrequencyShader;
     public ComputeShader timeFrequencyShader;
     public ComputeShader butterflyShader;
+    public ComputeShader pingPongShader;
+    public ComputeShader inversionShader;
+    public ComputeShader fillPingPongShader;
     public float windSpeed = 1;
     public Vector2 windDirection;
     public int L = 1;
@@ -29,6 +32,13 @@ public class OceanMapGenerator : MonoBehaviour
     public ComputeBuffer htk_dz_buffer;
     [NonSerialized]
     public ComputeBuffer butterfly_buffer;
+    [NonSerialized]
+    public ComputeBuffer ping_pong0_buffer;
+    [NonSerialized]
+    public ComputeBuffer ping_pong1_buffer;
+    [NonSerialized]
+    public ComputeBuffer height_buffer;
+
 
     private ComputeBuffer bit_reversed_buffer;
 
@@ -69,9 +79,44 @@ public class OceanMapGenerator : MonoBehaviour
                 temp >>= 1;
             }
             reversedBits[num] = reversed;
-            // Debug.Log(reversed + " " + Convert.ToString(reversed, 2));
         }
         bit_reversed_buffer.SetData(reversedBits);
+    }
+
+    void GeneratePingPongValues()
+    {
+
+        fillPingPongShader.SetBuffer(0, "freqData", htk_dy_buffer);
+        fillPingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+
+
+        int pingPong = 0;
+
+        pingPongShader.SetInt("_Direction", 0);
+        pingPongShader.SetInt("_PingPong", pingPong);
+
+        for (int i = 0; i < 8; i++)
+        {
+            pingPongShader.SetInt("_Stage", i);
+            pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+            pingPong = (pingPong + 1) % 2;
+            pingPongShader.SetInt("_PingPong", pingPong);
+        }
+
+        // pingPongShader.SetInt("_Direction", 1);
+
+        // for (int i = 0; i < 2; i++)
+        // {
+        //     pingPongShader.SetInt("_Stage", i);
+        //     pingPongShader.Dispatch(0, mapResolution, mapResolution, 1);
+        //     pingPong = (pingPong + 1) % 2;
+        //     pingPongShader.SetInt("_PingPong", pingPong);
+
+        // }
+
+        inversionShader.SetInt("_PingPong", pingPong);
+        inversionShader.Dispatch(0, mapResolution, mapResolution, 1);
+
     }
 
     void Awake()
@@ -84,6 +129,9 @@ public class OceanMapGenerator : MonoBehaviour
         htk_dz_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 2);
         butterfly_buffer = new ComputeBuffer(8 * mapResolution, sizeof(float) * 4);
         bit_reversed_buffer = new ComputeBuffer(mapResolution, sizeof(int));
+        ping_pong0_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 4);
+        ping_pong1_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 4);
+        height_buffer = new ComputeBuffer(mapResolution * mapResolution, sizeof(float) * 4);
 
         //Generate bit reversed indices buffer
         GenerateBitReverseIndex();
@@ -104,20 +152,44 @@ public class OceanMapGenerator : MonoBehaviour
         butterflyShader.SetBuffer(0, "butterfly_buffer", butterfly_buffer);
         butterflyShader.SetBuffer(0, "bit_reversed_buffer", bit_reversed_buffer);
 
+        pingPongShader.SetFloat("resolution", mapResolution);
+        pingPongShader.SetBuffer(0, "butterfly_buffer", butterfly_buffer);
+        pingPongShader.SetBuffer(0, "pingpong0", ping_pong0_buffer);
+        pingPongShader.SetBuffer(0, "pingpong1", ping_pong1_buffer);
+
+        inversionShader.SetFloat("resolution", mapResolution);
+        inversionShader.SetBuffer(0, "pingpong0", ping_pong0_buffer);
+        inversionShader.SetBuffer(0, "pingpong1", ping_pong1_buffer);
+        inversionShader.SetBuffer(0, "height_buffer", height_buffer);
+
+        fillPingPongShader.SetFloat("resolution", mapResolution);
+        fillPingPongShader.SetBuffer(0, "pingpong", ping_pong0_buffer);
 
         //Generate Butterfly Buffer
         GenerateButterflyValues();
+
+        //Generate Initial Fequencies
+        GenerateInitialFrequencyValues();
+
+        //Generate Time Frequencies
+        GenerateTimeFrequencyValues();
+
+        //Generate Height map
+        GeneratePingPongValues();
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        //Generate Initial Fequencies
-        GenerateInitialFrequencyValues();
+        // //Generate Initial Fequencies
+        // GenerateInitialFrequencyValues();
 
-        //Generate Time Frequencies
-        GenerateTimeFrequencyValues();
+        // //Generate Time Frequencies
+        // GenerateTimeFrequencyValues();
+
+        // //Generate Height map
+        // GeneratePingPongValues();
     }
 
     void OnApplicationQuit()
@@ -129,6 +201,9 @@ public class OceanMapGenerator : MonoBehaviour
         htk_dz_buffer.Release();
         butterfly_buffer.Release();
         bit_reversed_buffer.Release();
+        ping_pong0_buffer.Release();
+        ping_pong1_buffer.Release();
+        height_buffer.Release();
     }
 
 }

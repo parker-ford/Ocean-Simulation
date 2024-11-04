@@ -12,7 +12,10 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
         DXFreq,
         DYFreq,
         DZFreq,
-        Butterfly
+        Butterfly,
+        PingPong0,
+        PingPong1,
+        Height,
     }
     public OceanMapGenerator oceanMap;
     public ViewType viewType = ViewType.InitialFreq;
@@ -57,6 +60,21 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
         {
             material = new Material(Shader.Find("Parker/ComputeButterfly"));
             material.SetBuffer("viewBuffer", oceanMap.butterfly_buffer);
+        }
+        else if (viewType == ViewType.PingPong0)
+        {
+            material = new Material(Shader.Find("Parker/ComputeFloat4"));
+            material.SetBuffer("viewBuffer", oceanMap.ping_pong0_buffer);
+        }
+        else if (viewType == ViewType.PingPong1)
+        {
+            material = new Material(Shader.Find("Parker/ComputeFloat4"));
+            material.SetBuffer("viewBuffer", oceanMap.ping_pong1_buffer);
+        }
+        else if (viewType == ViewType.Height)
+        {
+            material = new Material(Shader.Find("Parker/ComputeFloat4"));
+            material.SetBuffer("viewBuffer", oceanMap.height_buffer);
         }
 
         material.SetFloat("resolution", oceanMap.mapResolution);

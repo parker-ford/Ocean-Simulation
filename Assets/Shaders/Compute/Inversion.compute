@@ -1,0 +1,32 @@
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+#include "../Includes/common.cginc"
+#include "../Includes/noise.cginc"
+
+RWStructuredBuffer<float4> height_buffer;
+StructuredBuffer<float4> pingpong0;
+StructuredBuffer<float4> pingpong1;
+float resolution;
+int _PingPong;
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float perms [] = {1.0, -1.0};
+    int index = ((id.x + id.y) % 2);
+    float perm = perms[index];
+
+    if(_PingPong == 0){
+        float h = pingpong0[id.x + id.y * resolution].r;
+        float val = perm * (h / (resolution * resolution));
+        // float val = h;
+        height_buffer[id.x + id.y * resolution] = float4(val, 0, 0, 1);
+    }
+    else{
+        float h = pingpong1[id.x + id.y * resolution].r;
+        float val = perm * (h / (resolution * resolution));
+        // float val = h;
+        height_buffer[id.x + id.y * resolution] = float4(val, 0, 0, 1); 
+    }
+}

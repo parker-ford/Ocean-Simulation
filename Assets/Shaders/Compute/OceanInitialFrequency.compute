@@ -87,6 +87,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float4 rand = gaussRND(uv);
 
-    h0k_buffer[id.x + id.y * resolution] = rand.xy * h0k;
+    // h0k_buffer[id.x + id.y * resolution] = rand.xy * h0k;
+    h0k_buffer[id.xy] = rand.xy * h0k;
     h0k_inv_buffer[id.x + id.y * resolution] = rand.zw * h0kminus;
 }

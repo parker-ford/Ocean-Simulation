@@ -152,10 +152,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4818aa3520077b649b818cfa734ff65a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapResolution: 512
+  mapResolution: 256
   initialFrequencyShader: {fileID: 7200000, guid: 3c171d2042d787641b496cf5bb18137c, type: 3}
   timeFrequencyShader: {fileID: 7200000, guid: 6cc8aab77af15134d9fe7aa25a43865b, type: 3}
   butterflyShader: {fileID: 7200000, guid: 6aab8c129b25f614b84d1651dca3e9f6, type: 3}
+  pingPongShader: {fileID: 7200000, guid: 3baccfa455676a24d9e7fbc5b0679078, type: 3}
+  inversionShader: {fileID: 7200000, guid: a16a4874b9715184184e576d5105cf63, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
   L: 1000
@@ -375,7 +377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oceanMap: {fileID: 590768244}
-  viewType: 3
+  viewType: 6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

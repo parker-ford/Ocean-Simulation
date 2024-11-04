@@ -39,7 +39,6 @@ float resolution;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint index = id.x + id.y * 8;
-    // float k = mod(id.y * (resolution / pow(2, id.x + 1)), (int)resolution);
     float k = (id.y * (resolution / pow(2, id.x + 1))) % (int)resolution;
     Complex twiddle = {cos(2.0 * PI * k / resolution), sin(2.0 * PI * k / resolution)};
 
@@ -68,9 +67,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         else {
             butterfly_buffer[index] = float4(twiddle.real, twiddle.im, id.y - butterflySpan, id.y);
         }
-    }
-
-    // butterfly_buffer[index] = float4((float)index / (resolution * 8.0), 0, 0, 1);
-    // butterfly_buffer[index] = float4((float)bit_reversed_buffer[id.y] / resolution , 0, 0, 1);
-   
+    }   
 }

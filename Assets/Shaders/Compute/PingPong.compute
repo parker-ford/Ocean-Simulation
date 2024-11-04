@@ -1,0 +1,118 @@
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+#include "../Includes/common.cginc"
+#include "../Includes/noise.cginc"
+
+struct Pixel {
+    float4 color;
+};
+
+struct Complex {
+    float real;
+    float im;
+};
+
+Complex mul(Complex c0, Complex c1){
+    Complex c;
+    c.real = c0.real * c1.real - c0.im * c1.im;
+    c.im = c0.real * c1.im + c0.im * c1.real;
+    return c;
+}
+
+Complex add(Complex c0, Complex c1) {
+    Complex c;
+    c.real = c0.real + c1.real;
+    c.im = c0.im + c1.im;
+    return c;
+}
+
+StructuredBuffer<float4> butterfly_buffer;
+
+RWStructuredBuffer<float4> pingpong0;
+RWStructuredBuffer<float4> pingpong1;
+
+
+float resolution;
+
+int _Stage;
+int _PingPong;
+int _Direction;
+
+void horizontalButterflies(uint3 id){
+    Complex H;
+    if(_PingPong == 0){
+        float4 data = butterfly_buffer[_Stage + id.x * 8].rgba;
+        float2 p_ = pingpong0[data.z + id.y * resolution].rg;
+        float2 q_ = pingpong0[data.w * id.y * resolution].rg;
+        float2 w_ = float2(data.x, data.y);
+
+        Complex p = {p_.x, p_.y};
+        Complex q = {q_.x, q_.y};
+        Complex w = {w_.x, w_.y};
+
+        H = add(p, mul(w,q));
+
+        pingpong1[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+    }
+    if(_PingPong == 1){
+        float4 data = butterfly_buffer[_Stage + id.x * 8].rgba;
+        float2 p_ = pingpong1[data.z + id.y * resolution].rg;
+        float2 q_ = pingpong1[data.w * id.y * resolution].rg;
+        float2 w_ = float2(data.x, data.y);
+
+        Complex p = {p_.x, p_.y};
+        Complex q = {q_.x, q_.y};
+        Complex w = {w_.x, w_.y};
+
+        H = add(p, mul(w,q));
+
+        pingpong0[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+    }
+}
+
+void verticalButterflies(uint3 id){
+    Complex H;
+    if(_PingPong == 0){
+        float4 data = butterfly_buffer[_Stage + id.y * 8].rgba;
+        pingpong1[id.x + id.y * resolution] = data;
+        float2 p_ = pingpong0[id.x + data.z * resolution].rg;
+        // float2 q_ = pingpong0[id.x + data.w * resolution].rg;
+        // float2 w_ = float2(data.x, data.y);
+
+        // Complex p = {p_.x, p_.y};
+        // Complex q = {q_.x, q_.y};
+        // Complex w = {w_.x, w_.y};
+
+        // H = add(p, mul(w,q));
+
+        // pingpong1[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+    }
+    if(_PingPong == 1){
+        float4 data = butterfly_buffer[_Stage + id.y * 8].rgba;
+        pingpong0[id.x + id.y * resolution] = data;
+    //     float2 p_ = pingpong1[id.x + data.z * resolution].rg;
+    //     float2 q_ = pingpong1[id.x + data.w * resolution].rg;
+    //     float2 w_ = float2(data.x, data.y);
+
+    //     Complex p = {p_.x, p_.y};
+    //     Complex q = {q_.x, q_.y};
+    //     Complex w = {w_.x, w_.y};
+
+    //     H = add(p, mul(w,q));
+
+    //     pingpong0[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+    }
+}
+
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if(_Direction == 0){
+        horizontalButterflies(id);
+    }
+    else{
+        verticalButterflies(id);
+    }
+}
