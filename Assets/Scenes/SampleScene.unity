@@ -158,6 +158,7 @@ MonoBehaviour:
   butterflyShader: {fileID: 7200000, guid: 6aab8c129b25f614b84d1651dca3e9f6, type: 3}
   pingPongShader: {fileID: 7200000, guid: 3baccfa455676a24d9e7fbc5b0679078, type: 3}
   inversionShader: {fileID: 7200000, guid: a16a4874b9715184184e576d5105cf63, type: 3}
+  fillPingPongShader: {fileID: 7200000, guid: c50bdf4e5a78b484c9ef30036f758570, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
   L: 1000
@@ -377,7 +378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oceanMap: {fileID: 590768244}
-  viewType: 6
+  viewType: 7
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

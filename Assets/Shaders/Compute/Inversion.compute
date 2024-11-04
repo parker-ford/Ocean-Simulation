@@ -4,9 +4,9 @@
 #include "../Includes/common.cginc"
 #include "../Includes/noise.cginc"
 
-RWStructuredBuffer<float4> height_buffer;
-StructuredBuffer<float4> pingpong0;
-StructuredBuffer<float4> pingpong1;
+RWTexture2D<float4> height_buffer;
+Texture2D<float4> pingpong0;
+Texture2D<float4> pingpong1;
 float resolution;
 int _PingPong;
 
@@ -18,15 +18,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float perm = perms[index];
 
     if(_PingPong == 0){
-        float h = pingpong0[id.x + id.y * resolution].r;
+        float h = pingpong0[id.xy].r;
         float val = perm * (h / (resolution * resolution));
         // float val = h;
-        height_buffer[id.x + id.y * resolution] = float4(val, 0, 0, 1);
+        height_buffer[id.xy] = float4(val, 0, 0, 1);
     }
     else{
-        float h = pingpong1[id.x + id.y * resolution].r;
+        float h = pingpong1[id.xy].r;
         float val = perm * (h / (resolution * resolution));
         // float val = h;
-        height_buffer[id.x + id.y * resolution] = float4(val, 0, 0, 1); 
+        height_buffer[id.xy] = float4(val, 0, 0, 1); 
     }
 }

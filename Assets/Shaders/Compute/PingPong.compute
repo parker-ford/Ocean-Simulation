@@ -27,10 +27,10 @@ Complex add(Complex c0, Complex c1) {
     return c;
 }
 
-StructuredBuffer<float4> butterfly_buffer;
+Texture2D<float4> butterfly_buffer;
 
-RWStructuredBuffer<float4> pingpong0;
-RWStructuredBuffer<float4> pingpong1;
+RWTexture2D<float4> pingpong0;
+RWTexture2D<float4> pingpong1;
 
 
 float resolution;
@@ -42,9 +42,9 @@ int _Direction;
 void horizontalButterflies(uint3 id){
     Complex H;
     if(_PingPong == 0){
-        float4 data = butterfly_buffer[_Stage + id.x * 8].rgba;
-        float2 p_ = pingpong0[data.z + id.y * resolution].rg;
-        float2 q_ = pingpong0[data.w * id.y * resolution].rg;
+        float4 data = butterfly_buffer[uint2(_Stage, id.x )].rgba;
+        float2 p_ = pingpong0[uint2(data.z, id.y)].rg;
+        float2 q_ = pingpong0[uint2(data.w, id.y)].rg;
         float2 w_ = float2(data.x, data.y);
 
         Complex p = {p_.x, p_.y};
@@ -53,12 +53,12 @@ void horizontalButterflies(uint3 id){
 
         H = add(p, mul(w,q));
 
-        pingpong1[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+        pingpong1[id.xy] = float4(H.real, H.im, 0, 1);
     }
     if(_PingPong == 1){
-        float4 data = butterfly_buffer[_Stage + id.x * 8].rgba;
-        float2 p_ = pingpong1[data.z + id.y * resolution].rg;
-        float2 q_ = pingpong1[data.w * id.y * resolution].rg;
+        float4 data = butterfly_buffer[uint2(_Stage, id.x )].rgba;
+        float2 p_ = pingpong1[uint2(data.z, id.y)].rg;
+        float2 q_ = pingpong1[uint2(data.w, id.y)].rg;
         float2 w_ = float2(data.x, data.y);
 
         Complex p = {p_.x, p_.y};
@@ -67,41 +67,40 @@ void horizontalButterflies(uint3 id){
 
         H = add(p, mul(w,q));
 
-        pingpong0[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+        pingpong0[id.xy] = float4(H.real, H.im, 0, 1);
     }
 }
 
 void verticalButterflies(uint3 id){
     Complex H;
     if(_PingPong == 0){
-        float4 data = butterfly_buffer[_Stage + id.y * 8].rgba;
-        pingpong1[id.x + id.y * resolution] = data;
-        float2 p_ = pingpong0[id.x + data.z * resolution].rg;
-        // float2 q_ = pingpong0[id.x + data.w * resolution].rg;
-        // float2 w_ = float2(data.x, data.y);
+        float4 data = butterfly_buffer[uint2(_Stage, id.y)].rgba;
+        float2 p_ = pingpong0[uint2(id.x, data.z)].rg;
+        float2 q_ = pingpong0[uint2(id.x, data.w)].rg;
+        float2 w_ = float2(data.x, data.y);
 
-        // Complex p = {p_.x, p_.y};
-        // Complex q = {q_.x, q_.y};
-        // Complex w = {w_.x, w_.y};
+        Complex p = {p_.x, p_.y};
+        Complex q = {q_.x, q_.y};
+        Complex w = {w_.x, w_.y};
 
-        // H = add(p, mul(w,q));
+        H = add(p, mul(w,q));
 
-        // pingpong1[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+        pingpong1[id.xy] = float4(H.real, H.im, 0, 1);
+
     }
     if(_PingPong == 1){
-        float4 data = butterfly_buffer[_Stage + id.y * 8].rgba;
-        pingpong0[id.x + id.y * resolution] = data;
-    //     float2 p_ = pingpong1[id.x + data.z * resolution].rg;
-    //     float2 q_ = pingpong1[id.x + data.w * resolution].rg;
-    //     float2 w_ = float2(data.x, data.y);
+        float4 data = butterfly_buffer[uint2(_Stage, id.y)].rgba;
+        float2 p_ = pingpong1[uint2(id.x, data.z)].rg;
+        float2 q_ = pingpong1[uint2(id.x, data.w)].rg;
+        float2 w_ = float2(data.x, data.y);
 
-    //     Complex p = {p_.x, p_.y};
-    //     Complex q = {q_.x, q_.y};
-    //     Complex w = {w_.x, w_.y};
+        Complex p = {p_.x, p_.y};
+        Complex q = {q_.x, q_.y};
+        Complex w = {w_.x, w_.y};
 
-    //     H = add(p, mul(w,q));
+        H = add(p, mul(w,q));
 
-    //     pingpong0[id.x + id.y * resolution] = float4(H.real, H.im, 0, 1);
+        pingpong0[id.xy] = float4(H.real, H.im, 0, 1);
     }
 }
 

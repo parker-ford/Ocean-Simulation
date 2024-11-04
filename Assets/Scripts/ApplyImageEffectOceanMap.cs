@@ -7,6 +7,7 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
 {
     public enum ViewType
     {
+        Source,
         InitialFreq,
         InitialInverseFreq,
         DXFreq,
@@ -19,94 +20,42 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
     }
     public OceanMapGenerator oceanMap;
     public ViewType viewType = ViewType.InitialFreq;
-    private ViewType lastViewType;
-
-
-    private Material material;
-
-    void UpdateViewType()
-    {
-        if (material != null)
-        {
-            Destroy(material);
-        }
-
-        if (viewType == ViewType.InitialFreq)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat2"));
-            material.SetBuffer("viewBuffer", oceanMap.h0k_buffer);
-        }
-        else if (viewType == ViewType.InitialInverseFreq)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat2"));
-            material.SetBuffer("viewBuffer", oceanMap.h0k_inv_buffer);
-        }
-        else if (viewType == ViewType.DXFreq)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat2"));
-            material.SetBuffer("viewBuffer", oceanMap.htk_dx_buffer);
-        }
-        else if (viewType == ViewType.DYFreq)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat2"));
-            material.SetBuffer("viewBuffer", oceanMap.htk_dy_buffer);
-        }
-        else if (viewType == ViewType.DZFreq)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat2"));
-            material.SetBuffer("viewBuffer", oceanMap.htk_dz_buffer);
-        }
-        else if (viewType == ViewType.Butterfly)
-        {
-            material = new Material(Shader.Find("Parker/ComputeButterfly"));
-            material.SetBuffer("viewBuffer", oceanMap.butterfly_buffer);
-        }
-        else if (viewType == ViewType.PingPong0)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat4"));
-            material.SetBuffer("viewBuffer", oceanMap.ping_pong0_buffer);
-        }
-        else if (viewType == ViewType.PingPong1)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat4"));
-            material.SetBuffer("viewBuffer", oceanMap.ping_pong1_buffer);
-        }
-        else if (viewType == ViewType.Height)
-        {
-            material = new Material(Shader.Find("Parker/ComputeFloat4"));
-            material.SetBuffer("viewBuffer", oceanMap.height_buffer);
-        }
-
-        material.SetFloat("resolution", oceanMap.mapResolution);
-    }
-
-    void Start()
-    {
-        lastViewType = viewType;
-        UpdateViewType();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (lastViewType != viewType)
-        {
-            UpdateViewType();
-        }
-
-        lastViewType = viewType;
-    }
 
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        if (material != null)
+        switch (viewType)
         {
-            Graphics.Blit(source, destination, material);
-        }
-        else
-        {
-            Debug.Log("No material set");
-            Graphics.Blit(source, destination);
+            case ViewType.Source:
+                Graphics.Blit(source, destination);
+                break;
+            case ViewType.InitialFreq:
+                Graphics.Blit(oceanMap.h0k_buffer, destination);
+                break;
+            case ViewType.InitialInverseFreq:
+                Graphics.Blit(oceanMap.h0k_inv_buffer, destination);
+                break;
+            case ViewType.DXFreq:
+                Graphics.Blit(oceanMap.htk_dx_buffer, destination);
+                break;
+            case ViewType.DYFreq:
+                Graphics.Blit(oceanMap.htk_dy_buffer, destination);
+                break;
+            case ViewType.DZFreq:
+                Graphics.Blit(oceanMap.htk_dz_buffer, destination);
+                break;
+            case ViewType.Butterfly:
+                Graphics.Blit(oceanMap.butterfly_buffer, destination);
+                break;
+            case ViewType.PingPong0:
+                Graphics.Blit(oceanMap.ping_pong0_buffer, destination);
+                break;
+            case ViewType.PingPong1:
+                Graphics.Blit(oceanMap.ping_pong1_buffer, destination);
+                break;
+            case ViewType.Height:
+                Graphics.Blit(oceanMap.height_buffer, destination);
+                break;
+
         }
     }
 }

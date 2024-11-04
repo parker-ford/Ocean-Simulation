@@ -4,10 +4,6 @@
 #include "../Includes/common.cginc"
 #include "../Includes/noise.cginc"
 
-struct Pixel {
-    float4 color;
-};
-
 struct Complex {
     float real;
     float im;
@@ -34,12 +30,12 @@ Complex conj(Complex c){
     return c_conj;
 }
 
-RWStructuredBuffer<float2> htk_dx_buffer;
-RWStructuredBuffer<float2> htk_dy_buffer;
-RWStructuredBuffer<float2> htk_dz_buffer;
+RWTexture2D<float2> htk_dx_buffer;
+RWTexture2D<float2> htk_dy_buffer;
+RWTexture2D<float2> htk_dz_buffer;
 
-StructuredBuffer<float2> h0k_buffer;
-StructuredBuffer<float2> h0k_inv_buffer;
+Texture2D<float2> h0k_buffer;
+Texture2D<float2> h0k_inv_buffer;
 
 float resolution;
 int _L;
@@ -58,8 +54,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float w = sqrt(GRAVITY * mag);
 
-    float2 h0k_val = h0k_buffer[id.x + id.y * resolution];
-    float2 h0k_inv_val = h0k_inv_buffer[id.x + id.y * resolution];
+    float2 h0k_val = h0k_buffer[id.xy];
+    float2 h0k_inv_val = h0k_inv_buffer[id.xy];
 
     Complex fourier_cmp = {h0k_val.x, h0k_val.y};
 
@@ -74,16 +70,16 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //dy
     Complex htk_dy = add(mul(fourier_cmp, exp_iwt), mul(fourier_cmp_conj, exp_iwt_inv));
-    htk_dy_buffer[id.x + id.y * resolution] = float2(htk_dy.real, htk_dy.im);
+    htk_dy_buffer[id.xy] = float2(htk_dy.real, htk_dy.im);
 
     //dx
     Complex dx = {0.0, -k.x/mag};
     Complex htk_dx = mul(dx, htk_dy);
-    htk_dx_buffer[id.x + id.y * resolution] = float2(htk_dx.real, htk_dx.im);
+    htk_dx_buffer[id.xy] = float2(htk_dx.real, htk_dx.im);
 
     //dz
     Complex dy = {0.0, -k.y/mag};
     Complex htk_dz = mul(dy, htk_dy);
-    htk_dz_buffer[id.x + id.y * resolution] = float2(htk_dz.real, htk_dz.im);
+    htk_dz_buffer[id.xy] = float2(htk_dz.real, htk_dz.im);
     
 }

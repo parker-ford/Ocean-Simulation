@@ -4,38 +4,9 @@
 #include "../Includes/common.cginc"
 #include "../Includes/noise.cginc"
 
-struct Pixel {
-    float4 color;
-};
 
-struct Complex {
-    float real;
-    float im;
-};
-
-Complex mul(Complex c0, Complex c1){
-    Complex c;
-    c.real = c0.real * c1.real - c0.im * c1.im;
-    c.im = c0.real * c1.im + c0.im * c1.real;
-    return c;
-}
-
-Complex add(Complex c0, Complex c1) {
-    Complex c;
-    c.real = c0.real + c1.real;
-    c.im = c0.im + c1.im;
-    return c;
-}
-
-Complex conj(Complex c){
-    Complex c_conj;
-    c_conj.real = c.real;
-    c_conj.im = -c.im;
-    return c_conj;
-}
-
-RWStructuredBuffer<float2> h0k_buffer;
-RWStructuredBuffer<float2> h0k_inv_buffer;
+RWTexture2D<float2> h0k_buffer;
+RWTexture2D<float2> h0k_inv_buffer;
 
 
 float resolution;
@@ -89,5 +60,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // h0k_buffer[id.x + id.y * resolution] = rand.xy * h0k;
     h0k_buffer[id.xy] = rand.xy * h0k;
-    h0k_inv_buffer[id.x + id.y * resolution] = rand.zw * h0kminus;
+    // h0k_inv_buffer[id.x + id.y * resolution] = rand.zw * h0kminus;
+    h0k_inv_buffer[id.xy] = rand.zw * h0kminus;
 }

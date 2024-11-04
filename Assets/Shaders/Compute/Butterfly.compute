@@ -30,42 +30,53 @@ Complex conj(Complex c){
     return c_conj;
 }
 
+float2 c_exp(float2 c){
+    return float2(cos(c.y), sin(c.y)) * exp(c.x);
+}
+
 StructuredBuffer<int> bit_reversed_buffer;
-RWStructuredBuffer<float4> butterfly_buffer;
+RWTexture2D<float4> butterfly_buffer;
 float resolution;
 
 
 [numthreads(1,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    uint index = id.x + id.y * 8;
-    float k = (id.y * (resolution / pow(2, id.x + 1))) % (int)resolution;
-    Complex twiddle = {cos(2.0 * PI * k / resolution), sin(2.0 * PI * k / resolution)};
+    // float k = (id.y * (resolution / pow(2, id.x + 1))) % (int)resolution;
+    // Complex twiddle = {cos(2.0 * PI * k / resolution), sin(2.0 * PI * k / resolution)};
 
-    int butterflySpan = (int)pow(2, id.x);
+    // int butterflySpan = (int)pow(2, id.x);
 
-    int butterflyWing;
-    if((id.x % pow(2, id.x + 1)) < pow(2, id.x)){
-        butterflyWing = 1;
-    }
-    else {
-        butterflyWing = 0;
-    }
+    // int butterflyWing;
+    // if((id.x % pow(2, id.x + 1)) < pow(2, id.x)){
+    //     butterflyWing = 1;
+    // }
+    // else {
+    //     butterflyWing = 0;
+    // }
 
-    if(id.x == 0){
-        if(butterflyWing == 1){
-            butterfly_buffer[index] = float4(twiddle.real, twiddle.im, bit_reversed_buffer[(int)id.y], bit_reversed_buffer[(int)id.y + 1]);
-        }
-        else {
-            butterfly_buffer[index] = float4(twiddle.real, twiddle.im, bit_reversed_buffer[id.y - 1], bit_reversed_buffer[id.y]);
-        }
-    }
-    else {
-        if(butterflyWing == 1){
-            butterfly_buffer[index] = float4(twiddle.real, twiddle.im, id.y, id.y + butterflySpan);
-        }
-        else {
-            butterfly_buffer[index] = float4(twiddle.real, twiddle.im, id.y - butterflySpan, id.y);
-        }
-    }   
+    // if(id.x == 0){
+    //     if(butterflyWing == 1){
+    //         butterfly_buffer[id.xy] = float4(twiddle.real, twiddle.im, bit_reversed_buffer[(int)id.y], bit_reversed_buffer[(int)id.y + 1]);
+    //     }
+    //     else {
+    //         butterfly_buffer[id.xy] = float4(twiddle.real, twiddle.im, bit_reversed_buffer[id.y - 1], bit_reversed_buffer[id.y]);
+    //     }
+    // }
+    // else {
+    //     if(butterflyWing == 1){
+    //         butterfly_buffer[id.xy] = float4(twiddle.real, twiddle.im, id.y, id.y + butterflySpan);
+    //     }
+    //     else {
+    //         butterfly_buffer[id.xy] = float4(twiddle.real, twiddle.im, id.y - butterflySpan, id.y);
+    //     }
+    // }
+    //----
+    uint b = (uint)resolution >> (id.x + 1);
+    float2 mult = 2 * PI * float2(0, 1) / resolution; //int vs float
+    uint i = (2 * b * (id.y / b) + id.y % b) % (uint)resolution;
+    float2 twiddle = c_exp(-mult * ((id.y / b) * b));
+    butterfly_buffer[id.xy] = float4(twiddle.x, twiddle.y, i, i + b);
+    butterfly_buffer[uint2(id.x, id.y + (uint)resolution / 2)] = float4(twiddle.x, -twiddle.y, i, i + b);
+
 }
