@@ -1,0 +1,61 @@
+#include "../Includes/common.cginc"
+#include "../Includes/complex.cginc"
+
+
+#pragma kernel CS_PrecomputeButtefly
+#pragma kernel CS_HorzontalStepIFFT
+#pragma kernel CS_VerticalStepIFFT
+
+RWTexture2D<float4> _Butterfly;
+RWTexture2D<float2> _PingPong0, _PingPong1;
+// RWTexture2DArray<float2> _PingPong;
+
+uint _MapSize, _Step;
+bool _PingPongFlag;
+
+[numthreads(1,1,1)]
+void CS_PrecomputeButtefly(uint3 id : SV_DispatchThreadID)
+{
+    uint b = _MapSize >> (id.x + 1);
+    float2 mult = 2.0 * PI * float2(0, 1) / (float)_MapSize; //int vs float
+    uint i = (2 * b * (id.y / b) + id.y % b) % _MapSize;
+    float2 twiddle = c_exp(-mult * ((id.y / b) * b));
+    _Butterfly[id.xy] = float4(twiddle.x, twiddle.y, i, i + b);
+    _Butterfly[uint2(id.x, id.y + _MapSize / 2)] = float4(twiddle.x, -twiddle.y, i, i + b);
+}
+
+[numthreads(8,8,1)]
+void CS_HorzontalStepIFFT(uint3 id : SV_DispatchThreadID)
+{
+    float4 data = _Butterfly[uint2(_Step, id.x)];
+	uint2 inputsIndices = (uint2)data.ba;
+
+	if (_PingPongFlag)
+	{
+		_PingPong1[id.xy] = _PingPong0[uint2(inputsIndices.x, id.y)]
+			+ ComplexMult(float2(data.r, -data.g), _PingPong0[uint2(inputsIndices.y, id.y)]);
+	}
+	else
+	{
+		_PingPong0[id.xy] = _PingPong1[uint2(inputsIndices.x, id.y)]
+			+ ComplexMult(float2(data.r, -data.g), _PingPong1[uint2(inputsIndices.y, id.y)]);
+	}
+}
+
+[numthreads(8,8,1)]
+void CS_VerticalStepIFFT(uint3 id : SV_DispatchThreadID)
+{
+    float4 data = _Butterfly[uint2(_Step, id.y)];
+	uint2 inputsIndices = (uint2)data.ba;
+	if (_PingPongFlag)
+	{
+		_PingPong1[id.xy] = _PingPong0[uint2(id.x, inputsIndices.x)]
+			+ ComplexMult(float2(data.r, -data.g), _PingPong0[uint2(id.x, inputsIndices.y)]);
+	}
+	else
+	{
+		_PingPong0[id.xy] = _PingPong1[uint2(id.x, inputsIndices.x)]
+			+ ComplexMult(float2(data.r, -data.g), _PingPong1[uint2(id.x, inputsIndices.y)]);
+	}
+}
+

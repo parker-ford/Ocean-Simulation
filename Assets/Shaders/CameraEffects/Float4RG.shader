@@ -1,13 +1,13 @@
-Shader "Parker/OceanShader"
+Shader "Parker/Float4RG"
 {
     Properties
     {
-        _DisplacementTex ("Texture", 2D) = "white" {}
+        _Tex ("Texture", 2D) = "white" {}
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        // No culling or depth
+        Cull Off ZWrite Off ZTest Always
 
         Pass
         {
@@ -16,6 +16,7 @@ Shader "Parker/OceanShader"
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+
 
             struct appdata
             {
@@ -29,24 +30,19 @@ Shader "Parker/OceanShader"
                 float4 vertex : SV_POSITION;
             };
 
-            sampler2D _DisplacementTex;
-            float4 _DisplacementTex_ST;
-
             v2f vert (appdata v)
             {
                 v2f o;
-                float3 displacement = tex2Dlod(_DisplacementTex, float4(v.uv,0,0)).rgb;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.vertex.xyz += displacement;
-                // o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.uv = v.uv;
                 return o;
             }
 
+            sampler2D _Tex;
+
             fixed4 frag (v2f i) : SV_Target
             {
-                float4 col = tex2D(_DisplacementTex, i.uv);
-                return col;
+                return float4(tex2D(_Tex, i.uv).rg, 0, 1);
             }
             ENDCG
         }

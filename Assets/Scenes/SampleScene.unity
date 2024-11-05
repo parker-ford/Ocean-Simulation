@@ -153,16 +153,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapResolution: 256
-  initialFrequencyShader: {fileID: 7200000, guid: 3c171d2042d787641b496cf5bb18137c, type: 3}
-  timeFrequencyShader: {fileID: 7200000, guid: 6cc8aab77af15134d9fe7aa25a43865b, type: 3}
-  butterflyShader: {fileID: 7200000, guid: 6aab8c129b25f614b84d1651dca3e9f6, type: 3}
-  pingPongShader: {fileID: 7200000, guid: 3baccfa455676a24d9e7fbc5b0679078, type: 3}
-  inversionShader: {fileID: 7200000, guid: a16a4874b9715184184e576d5105cf63, type: 3}
-  fillPingPongShader: {fileID: 7200000, guid: c50bdf4e5a78b484c9ef30036f758570, type: 3}
+  oceanagraphicSpectraShader: {fileID: 7200000, guid: 8b3953fb6728aac4c8acd2fe650a2cca, type: 3}
+  fftShader: {fileID: 7200000, guid: 902f8fa327aab2b48bbd153e698976fb, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
   L: 1000
-  A: 4
+  A: 40
+  depth: 40
 --- !u!4 &590768245
 Transform:
   m_ObjectHideFlags: 0
@@ -284,6 +281,7 @@ GameObject:
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
   - component: {fileID: 963194230}
+  - component: {fileID: 963194231}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -378,7 +376,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oceanMap: {fileID: 590768244}
-  viewType: 0
+  viewType: 1
+--- !u!114 &963194231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32451548ef4843b4e91a110fb9e03e38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boost: 3.5
+  positionLerpTime: 0.2
+  mouseSensitivityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.5
+      inSlope: 0
+      outSlope: 5
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 2.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  rotationLerpTime: 0.01
+  invertY: 0
 --- !u!1 &2007966569
 GameObject:
   m_ObjectHideFlags: 0
@@ -397,7 +435,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2007966570
 Transform:
   m_ObjectHideFlags: 0
@@ -407,7 +445,7 @@ Transform:
   m_GameObject: {fileID: 2007966569}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -428,7 +466,7 @@ MonoBehaviour:
   meshFilter: {fileID: 2007966572}
   oceanMapGenerator: {fileID: 590768244}
   oceanShader: {fileID: 4800000, guid: 1de2ff53550f6a84baed4ca8751234c0, type: 3}
-  size: 10
+  size: 1
 --- !u!33 &2007966572
 MeshFilter:
   m_ObjectHideFlags: 0

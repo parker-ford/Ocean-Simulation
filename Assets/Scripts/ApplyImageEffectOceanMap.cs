@@ -9,10 +9,11 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
     {
         Source,
         InitialFreq,
-        InitialInverseFreq,
-        DXFreq,
-        DYFreq,
-        DZFreq,
+        WavesData,
+        DxDz,
+        DyDxy,
+        DyxDyz,
+        DxxDzz,
         Butterfly,
         PingPong0,
         PingPong1,
@@ -20,6 +21,17 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
     }
     public OceanMapGenerator oceanMap;
     public ViewType viewType = ViewType.InitialFreq;
+    private Material viewTextureArray;
+    private Material viewFloat4RG;
+
+    void Start()
+    {
+        viewTextureArray = new Material(Shader.Find("Parker/TextureArray"));
+        viewTextureArray.SetTexture("_TextureArray", oceanMap.spectrum);
+
+        viewFloat4RG = new Material(Shader.Find("Parker/Float4RG"));
+        viewFloat4RG.SetTexture("_Tex", oceanMap.initialSpectrum);
+    }
 
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
@@ -29,32 +41,39 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
                 Graphics.Blit(source, destination);
                 break;
             case ViewType.InitialFreq:
-                Graphics.Blit(oceanMap.h0k_buffer, destination);
+                Graphics.Blit(source, destination, viewFloat4RG);
                 break;
-            case ViewType.InitialInverseFreq:
-                Graphics.Blit(oceanMap.h0k_inv_buffer, destination);
+            case ViewType.WavesData:
+                Graphics.Blit(oceanMap.wavesData, destination);
                 break;
-            case ViewType.DXFreq:
-                Graphics.Blit(oceanMap.htk_dx_buffer, destination);
+            case ViewType.DxDz:
+                viewTextureArray.SetFloat("_Layer", 0);
+                Graphics.Blit(source, destination, viewTextureArray);
                 break;
-            case ViewType.DYFreq:
-                Graphics.Blit(oceanMap.htk_dy_buffer, destination);
+            case ViewType.DyDxy:
+                viewTextureArray.SetFloat("_Layer", 1);
+                Graphics.Blit(source, destination, viewTextureArray);
                 break;
-            case ViewType.DZFreq:
-                Graphics.Blit(oceanMap.htk_dz_buffer, destination);
+            case ViewType.DyxDyz:
+                viewTextureArray.SetFloat("_Layer", 2);
+                Graphics.Blit(source, destination, viewTextureArray);
+                break;
+            case ViewType.DxxDzz:
+                viewTextureArray.SetFloat("_Layer", 3);
+                Graphics.Blit(source, destination, viewTextureArray);
                 break;
             case ViewType.Butterfly:
-                Graphics.Blit(oceanMap.butterfly_buffer, destination);
+                Graphics.Blit(oceanMap.butterfly, destination);
                 break;
-            case ViewType.PingPong0:
-                Graphics.Blit(oceanMap.ping_pong0_buffer, destination);
-                break;
-            case ViewType.PingPong1:
-                Graphics.Blit(oceanMap.ping_pong1_buffer, destination);
-                break;
-            case ViewType.Height:
-                Graphics.Blit(oceanMap.height_buffer, destination);
-                break;
+                // case ViewType.PingPong0:
+                //     Graphics.Blit(oceanMap.ping_pong0_buffer, destination);
+                //     break;
+                // case ViewType.PingPong1:
+                //     Graphics.Blit(oceanMap.ping_pong1_buffer, destination);
+                //     break;
+                // case ViewType.Height:
+                //     Graphics.Blit(oceanMap.height_buffer, destination);
+                //     break;
 
         }
     }

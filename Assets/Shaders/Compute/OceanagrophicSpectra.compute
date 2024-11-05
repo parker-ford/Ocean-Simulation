@@ -1,0 +1,161 @@
+#include "UnityCG.cginc"
+#include "../Includes/common.cginc"
+#include "../Includes/complex.cginc"
+#include "../Includes/noise.cginc"
+
+#pragma kernel CS_InitializeSpectrum
+#pragma kernel CS_UpdateSpectrum
+
+RWTexture2D<float4> _InitialSpectrum, _WavesData;
+RWTexture2DArray<float2> _Spectrum;
+
+
+uint _L, _MapSize;
+float _A, _WindSpeed, _Depth;
+float2 _WindDirection;
+
+float4 GaussianRandom(float2 uv){
+    //TODO: Try sampling noise texture rather than generating
+    float n0 = clamp(whiteNoise_2D(uv, 1), 0.001, 1.0);
+    float n1 = clamp(whiteNoise_2D(uv, 1324), 0.001, 1.0);
+    float n2 = clamp(whiteNoise_2D(uv, 46512), 0.001, 1.0);
+    float n3 = clamp(whiteNoise_2D(uv, 798654), 0.001, 1.0);
+
+    float u0 = 2.0 * PI * n0;
+    float v0 = sqrt(-2.0 * log(n1));
+    float u1 = 2.0 * PI * n2;
+    float v1 = sqrt(-2.0 * log(n3));
+
+    float4 rand = float4(v0 * cos(u0), v0 * sin(u0), v1 * cos(u1), v1 * sin(u1));
+
+    return rand;
+}
+
+float Frequency(float k, float g, float depth)
+{
+	return sqrt(g * k * tanh(min(k * depth, 20)));
+}
+
+float4 PhillipsSpectrum(uint2 id){
+    float2 uv = float2(id.xy) / (float)_MapSize;
+    float2 x = float2(id.xy) - (float)_MapSize / 2.0;
+    float2 k = float2(2.0 * PI * x.x / _L, 2.0 * PI * x.y / _L);
+
+    float L_ = (_WindSpeed * _WindSpeed) / GRAVITY;
+    float mag = length(k);
+    mag = max(mag, 0.00001);
+    float magSq = mag * mag;
+
+    float h0k = clamp(sqrt(( _A / (magSq * magSq))
+    * pow(dot(normalize(k), normalize(_WindDirection)), 6.0)
+    * exp(-(1.0/(magSq * L_ * L_)))
+    * exp(-magSq * pow( _L / 2000.0, 2.0))) / sqrt(2.0), -4000.0, 4000.0);
+
+    float h0kminus = clamp(sqrt (( _A / (magSq * magSq))
+    * pow(dot(normalize(-k), normalize(_WindDirection)), 6.0)
+    * exp(-(1.0/(magSq * L_ * L_)))
+    * exp(-magSq*pow(_L / 2000.0, 2.0))) / sqrt(2.0), -4000, 4000);
+
+    float4 rand = GaussianRandom(uv);
+    
+    return float4(rand.xy * h0k, rand.zw * h0kminus);
+}
+
+[numthreads(8,8,1)]
+void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
+{
+    float deltaK = 2 * PI / _L;
+    int nx = id.x - _MapSize / 2;
+    int nz = id.y - _MapSize / 2;
+    float2 k = float2(nx, nz) * deltaK;
+    float kLength = length(k);
+    float kLength2 = kLength * kLength;
+
+    //TODO: implement low and high pass here
+    float kAngle = atan2(k.y, k.x);
+    float omega = Frequency(kLength, GRAVITY, _Depth);
+    _WavesData[id.xy] = float4(k.x, 1.0 / kLength, k.y, omega);
+
+    float L_ = (_WindSpeed * _WindSpeed) / GRAVITY;
+    float h0k = clamp(sqrt(( _A / (kLength2 * kLength2))
+    * pow(dot(normalize(k), normalize(_WindDirection)), 6.0)
+    * exp(-(1.0/(kLength2 * L_ * L_)))
+    * exp(-kLength2 * pow( _L / 2000.0, 2.0))) / sqrt(2.0), -4000.0, 4000.0);
+
+    float h0kminus = clamp(sqrt (( _A / (kLength2 * kLength2))
+    * pow(dot(normalize(-k), normalize(_WindDirection)), 6.0)
+    * exp(-(1.0/(kLength2 * L_ * L_)))
+    * exp(-kLength2*pow(_L / 2000.0, 2.0))) / sqrt(2.0), -4000, 4000);
+
+    float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
+
+    float2 h0k2 = rand.xy * h0k;
+    float2 h0k2minus = rand.zw * h0kminus;
+    
+    _InitialSpectrum[id.xy] = float4(h0k2.x, h0k2.y, h0k2minus.x, -h0k2minus.y);
+}
+
+[numthreads(8,8,1)]
+void CS_UpdateSpectrum(uint3 id: SV_DispatchThreadID)
+{
+    // float2 x = float2(id.xy) - (float)_MapSize / 2.0;
+    // float2 k = float2(2.0 * PI * x.x / _L, 2.0 * PI * x.y / _L);
+    // float mag = length(k);
+    // mag = max(mag, 0.00001);
+    // float w = sqrt(GRAVITY * mag);
+
+    // float2 h0k_val = _InitialSpectrum[id.xy].rg;
+    // float2 h0k_inv_val = _InitialSpectrum[id.xy].ba;
+
+    // Complex fourier_cmp = {h0k_val.x, h0k_val.y};
+    // Complex fourier_inv = {h0k_inv_val.x, h0k_inv_val.y};
+    // Complex fourier_cmp_conj = conj(fourier_inv);
+
+    // float cos_w_t = cos(w * _Time.y);
+    // float sin_w_t = sin(w * _Time.y);
+
+    // Complex exp_iwt = {cos_w_t, sin_w_t};
+    // Complex exp_iwt_inv = {cos_w_t, -sin_w_t};
+
+    // //dy
+    // Complex htk_dy = add(mul(fourier_cmp, exp_iwt), mul(fourier_cmp_conj, exp_iwt_inv));
+    // _Spectrum[uint3(id.xy, 1)] = float2(htk_dy.real, htk_dy.im);
+
+    // //dx
+    // Complex dx = {0.0, -k.x/mag};
+    // Complex htk_dx = mul(dx, htk_dy);
+    // _Spectrum[uint3(id.xy, 0)] = float2(htk_dx.real, htk_dx.im);
+
+    // //dz
+    // Complex dy = {0.0, -k.y/mag};
+    // Complex htk_dz = mul(dy, htk_dy);
+    // _Spectrum[uint3(id.xy, 2)] = float2(htk_dz.real, htk_dz.im);
+    //---
+    float4 wave = _WavesData[id.xy];
+    float phase = wave.w * _Time.y;
+    float2 exponent = float2(cos(phase), sin(phase));
+    float2 h = ComplexMult(_InitialSpectrum[id.xy].xy, exponent) + ComplexMult(_InitialSpectrum[id.xy].zw, float2(exponent.x, -exponent.y));
+    float ih = float2(-h.y, h.x);
+
+    float2 displacementX = ih * wave.x * wave.y;
+    float2 displacementY = h;
+    float2 displacementZ = ih * wave.z * wave.y;
+
+    float2 displacementX_dx = -h * wave.x * wave.x * wave.y;
+    float2 displacementY_dx = ih * wave.x;
+    float2 displacementZ_dx = -h * wave.x * wave.z * wave.y;
+
+    float2 displacementY_dz = ih * wave.z;
+    float2 displacementZ_dz = -h * wave.z * wave.z * wave.y;
+
+    //Dx_Dz
+    _Spectrum[uint3(id.xy, 0)] = float2(displacementX.x - displacementZ.y, displacementX.y + displacementZ.x);
+    //Dy_Dxy
+    _Spectrum[uint3(id.xy, 1)] = float2(displacementY.x - displacementZ_dx.y, displacementY.y + displacementZ_dx.x);
+    //Dyx_Dyz
+    _Spectrum[uint3(id.xy, 2)] = float2(displacementY_dx.x - displacementY_dz.y, displacementY_dx.y + displacementY_dz.x);
+    //Dxx_Dzz
+    _Spectrum[uint3(id.xy, 3)] = float2(displacementX_dx.x - displacementZ_dz.y, displacementX_dx.y + displacementZ_dz.x);
+
+    // float2 h = ComplexMult()
+}
