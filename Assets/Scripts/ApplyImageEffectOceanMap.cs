@@ -15,9 +15,8 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
         DyxDyz,
         DxxDzz,
         Butterfly,
-        PingPong0,
-        PingPong1,
-        Height,
+        Buffer,
+        Displacement
     }
     public OceanMapGenerator oceanMap;
     public ViewType viewType = ViewType.InitialFreq;
@@ -26,8 +25,8 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
 
     void Start()
     {
-        viewTextureArray = new Material(Shader.Find("Parker/TextureArray"));
-        viewTextureArray.SetTexture("_TextureArray", oceanMap.spectrum);
+        // viewTextureArray = new Material(Shader.Find("Parker/TextureArray"));
+        // viewTextureArray.SetTexture("_TextureArray", oceanMap.spectrum);
 
         viewFloat4RG = new Material(Shader.Find("Parker/Float4RG"));
         viewFloat4RG.SetTexture("_Tex", oceanMap.initialSpectrum);
@@ -47,23 +46,29 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
                 Graphics.Blit(oceanMap.wavesData, destination);
                 break;
             case ViewType.DxDz:
-                viewTextureArray.SetFloat("_Layer", 0);
-                Graphics.Blit(source, destination, viewTextureArray);
+                // viewTextureArray.SetFloat("_Layer", 0);
+                Graphics.Blit(oceanMap.spectrumDxDz, destination);
                 break;
             case ViewType.DyDxy:
-                viewTextureArray.SetFloat("_Layer", 1);
-                Graphics.Blit(source, destination, viewTextureArray);
+                // viewTextureArray.SetFloat("_Layer", 1);
+                Graphics.Blit(oceanMap.spectrumDyDxy, destination);
                 break;
             case ViewType.DyxDyz:
-                viewTextureArray.SetFloat("_Layer", 2);
-                Graphics.Blit(source, destination, viewTextureArray);
+                // viewTextureArray.SetFloat("_Layer", 2);
+                Graphics.Blit(oceanMap.spectrumDyxDyz, destination);
                 break;
             case ViewType.DxxDzz:
-                viewTextureArray.SetFloat("_Layer", 3);
-                Graphics.Blit(source, destination, viewTextureArray);
+                // viewTextureArray.SetFloat("_Layer", 3);
+                Graphics.Blit(oceanMap.spectrumDxxDzz, destination);
                 break;
             case ViewType.Butterfly:
                 Graphics.Blit(oceanMap.butterfly, destination);
+                break;
+            case ViewType.Buffer:
+                Graphics.Blit(oceanMap.buffer, destination);
+                break;
+            case ViewType.Displacement:
+                Graphics.Blit(oceanMap.displacement, destination);
                 break;
                 // case ViewType.PingPong0:
                 //     Graphics.Blit(oceanMap.ping_pong0_buffer, destination);
