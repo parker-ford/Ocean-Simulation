@@ -4,6 +4,7 @@
 #include "../Includes/noise.cginc"
 
 #pragma kernel CS_InitializeSpectrum
+#pragma kernel CS_ConjugateSpectrum
 #pragma kernel CS_UpdateSpectrum
 #pragma kernel CS_Assemble
 
@@ -32,61 +33,73 @@ float4 GaussianRandom(float2 uv){
     return rand;
 }
 
-float Frequency(float k, float g, float depth)
-{
-	return sqrt(g * k * tanh(min(k * depth, 20)));
+float Dispersion(float kMag) {
+    return sqrt(GRAVITY  * kMag * tanh(min(kMag * _Depth, 20)));
 }
 
-float2 PhillipsSpectrum(uint2 id){
+float DispersionDerivative(float kMag) {
+    float th = tanh(min(kMag * _Depth, 20));
+    float ch = cosh(kMag * _Depth);
+    return GRAVITY * (_Depth * kMag / ch / ch + th) / Dispersion(kMag) / 2.0f;
+}
+
+float2 PhillipsSpectrum(float2 k){
+    float kLength = length(k);
+    if(kLength < 0.00001) kLength = 0.00001;
+
+    float kLength2 = kLength * kLength;
+    float kLength4 = kLength2 * kLength2;
+
+    float kDotW = dot(normalize(k), normalize(_WindDirection));
+    float kDotW2 = kDotW * kDotW * kDotW * kDotW * kDotW * kDotW;
+
+    float L = (_WindSpeed * _WindSpeed) / GRAVITY;
+    float L2 = L * L;
+
+    //TODO: Experiment with damping
+    float damping = 1.0 / 2000.0;
+    float l2 = L2 * damping * damping;
+
+    //TODO: think about removing A to general amplitude ?
+    float test =  _A * exp(-1.0 / (kLength2 * L2)) / kLength4 * kDotW2 * exp(-kLength2 * l2);
+
+    //Why does this need to be clamped? Why sqrt(test) and / sqrt(2) ???? i dont know but it works
+    return clamp(sqrt(test) / sqrt(2.0), -4000, 4000);
+
+}
+
+
+
+[numthreads(1,1,1)]
+void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
+{
     float deltaK = 2 * PI / _L;
     int nx = id.x - _MapSize / 2;
     int nz = id.y - _MapSize / 2;
     float2 k = float2(nx, nz) * deltaK;
     float kLength = length(k);
-    float kLength2 = kLength * kLength;
 
-    // if(kLength > 0.5){
-    //     return float2(0,0);
-    // }
+    float omega = Dispersion(kLength);
+    float dOmegak = DispersionDerivative(kLength);
+    _WavesData[id.xy] = float4(k.x, 1 / kLength, k.y, omega);
 
-    //TODO: implement low and high pass here
-    float kAngle = atan2(k.y, k.x);
-    float omega = Frequency(kLength, GRAVITY, _Depth);
-    _WavesData[id.xy] = float4(k.x, 1.0 / kLength, k.y, omega);
-
-    float L_ = (_WindSpeed * _WindSpeed) / GRAVITY;
-
-    // float h0k = exp(-1 / pow(k * L, 2));
-    // h0k /= (kLength2 * kLength2);
-    // h0k *= _A;
-    // h0k *= pow(dot(normalize(k) * normalize(_WindDirection)), 2);
-
-    float h0k = clamp(sqrt(( _A / (kLength2 * kLength2))
-    * pow(dot(normalize(k), normalize(_WindDirection)), 6.0)
-    * exp(-(1.0/(kLength2 * L_ * L_)))
-    * exp(-kLength2 * pow( _L / 2000.0, 2.0))) / sqrt(2.0), -4000.0, 4000.0);
-
-    float h0kminus = clamp(sqrt (( _A / (kLength2 * kLength2))
-    * pow(dot(normalize(-k), normalize(_WindDirection)), 6.0)
-    * exp(-(1.0/(kLength2 * L_ * L_)))
-    * exp(-kLength2*pow(_L / 2000.0, 2.0))) / sqrt(2.0), -4000, 4000);
-
+    float spectrum = PhillipsSpectrum(k);
     float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
 
-    return rand.xy * h0k;
-
-
+    //TODO: Investigate this and other spectrums
+    // float2 h0k = rand.xy * sqrt(2.0 * spectrum * abs(dOmegak) / kLength * deltaK * deltaK);
+    float2 h0k = rand.xy * sqrt(2.0 * spectrum);
     
+    _InitialSpectrum[id.xy] = float4(h0k, 0, 0);
+
 }
 
 [numthreads(1,1,1)]
-void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
-{
-    // float4 initialSpectrum = float4(0,0,0,0);
-    // float2 h0k = 1.0/sqrt(2) 
-    _InitialSpectrum[id.xy] = float4(PhillipsSpectrum(id.xy), 0, 0);
-    // float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
-    // _InitialSpectrum[id.xy] =  float4(rand.xy, 0, 0);
+void CS_ConjugateSpectrum(uint3 id : SV_DispatchThreadID){
+    float2 h0k = _InitialSpectrum[id.xy].rg;
+    float2 h0minusK = _InitialSpectrum[uint2((_MapSize - id.x) % _MapSize, (_MapSize - id.y) % _MapSize)];
+    _InitialSpectrum[id.xy] = float4(h0k, h0minusK.x, -h0minusK.y);
+    // _InitialSpectrum[id.xy] = float4(0,0,1,0);
 }
 
 [numthreads(8,8,1)]

@@ -31,6 +31,7 @@ public class OceanMapGenerator : MonoBehaviour
     public int L = 1;
     public float A = 1;
     public float depth = 1;
+    public bool doIfft = false;
 
 
     [NonSerialized]
@@ -73,6 +74,7 @@ public class OceanMapGenerator : MonoBehaviour
 
     //Kernel IDs
     int KERNEL_INIT_SPECTRUM;
+    int KERNEL_CONJUGATE_SPECTRUM;
     int KERNEL_UPDATE_SPECTRUM;
     int KERNEL_PRECOMPUTE_BUTTERFLY;
     int KERNEL_HORIZONTAL_IFFT;
@@ -162,7 +164,7 @@ public class OceanMapGenerator : MonoBehaviour
         fftShader.SetTexture(KERNEL_VERTICAL_IFFT, "_Target", input);
         fftShader.Dispatch(KERNEL_VERTICAL_IFFT, 1, size, 1);
 
-        fftShader.SetBool("_Scale", false);
+        fftShader.SetBool("_Scale", true);
         fftShader.SetBool("_Permute", true);
         fftShader.SetTexture(KERNEL_POST_PROCESS, "_Target", input);
         fftShader.Dispatch(KERNEL_POST_PROCESS, size, size, 1);
@@ -172,6 +174,7 @@ public class OceanMapGenerator : MonoBehaviour
     void SetKernelIDs()
     {
         KERNEL_INIT_SPECTRUM = oceanographicSpectraShader.FindKernel("CS_InitializeSpectrum");
+        KERNEL_CONJUGATE_SPECTRUM = oceanographicSpectraShader.FindKernel("CS_ConjugateSpectrum");
         KERNEL_UPDATE_SPECTRUM = oceanographicSpectraShader.FindKernel("CS_UpdateSpectrum");
         KERNEL_PRECOMPUTE_BUTTERFLY = fftShader.FindKernel("CS_PrecomputeButtefly");
         KERNEL_HORIZONTAL_IFFT = fftShader.FindKernel("CS_HorzontalStepIFFT");
@@ -220,17 +223,16 @@ public class OceanMapGenerator : MonoBehaviour
         oceanographicSpectraShader.SetTexture(KERNEL_INIT_SPECTRUM, "_WavesData", wavesData);
         oceanographicSpectraShader.Dispatch(KERNEL_INIT_SPECTRUM, 512, 512, 1);
 
-        IFFT(initialSpectrum);
-
-
+        oceanographicSpectraShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, "_InitialSpectrum", initialSpectrum);
+        oceanographicSpectraShader.Dispatch(KERNEL_CONJUGATE_SPECTRUM, 512, 512, 1);
 
         //Generate Time Dependent Spectrum
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDxDz", spectrumDxDz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDyDxy", spectrumDyDxy);
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDyxDyz", spectrumDyxDyz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDxxDzz", spectrumDxxDzz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_WavesData", wavesData);
-        // oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_InitialSpectrum", initialSpectrum);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDxDz", spectrumDxDz);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDyDxy", spectrumDyDxy);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDyxDyz", spectrumDyxDyz);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_SpectrumDxxDzz", spectrumDxxDzz);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_WavesData", wavesData);
+        oceanographicSpectraShader.SetTexture(KERNEL_UPDATE_SPECTRUM, "_InitialSpectrum", initialSpectrum);
         // oceanographicSpectraShader.Dispatch(KERNEL_UPDATE_SPECTRUM, threadGroups, threadGroups, 1);
 
         // IFFT(spectrumDxDz, true);
@@ -239,17 +241,29 @@ public class OceanMapGenerator : MonoBehaviour
         // IFFT(spectrumDxxDzz);
 
         // //Assemble
-        // oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDxDz", spectrumDxDz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDyDxy", spectrumDyDxy);
-        // oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDyxDyz", spectrumDyxDyz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDxxDzz", spectrumDxxDzz);
-        // oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_Displacement", displacement);
+        oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDxDz", spectrumDxDz);
+        oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDyDxy", spectrumDyDxy);
+        oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDyxDyz", spectrumDyxDyz);
+        oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_SpectrumDxxDzz", spectrumDxxDzz);
+        oceanographicSpectraShader.SetTexture(KERNEL_ASSEMBLE, "_Displacement", displacement);
 
     }
 
+
     void Update()
     {
-
+        SetSpectrumUniforms();
+        oceanographicSpectraShader.Dispatch(KERNEL_INIT_SPECTRUM, 512, 512, 1);
+        oceanographicSpectraShader.Dispatch(KERNEL_CONJUGATE_SPECTRUM, 512, 512, 1);
+        // oceanographicSpectraShader.Dispatch(KERNEL_UPDATE_SPECTRUM, 512, 512, 1);
+        if (doIfft)
+        {
+            IFFT(initialSpectrum);
+            // IFFT(spectrumDxDz);
+            // IFFT(spectrumDyDxy);
+            // IFFT(spectrumDyxDyz);
+            // IFFT(spectrumDxxDzz);
+        }
     }
 
     void OnApplicationQuit()

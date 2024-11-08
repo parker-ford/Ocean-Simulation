@@ -157,9 +157,10 @@ MonoBehaviour:
   fftShader: {fileID: 7200000, guid: 902f8fa327aab2b48bbd153e698976fb, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
-  L: 1000
-  A: 100
-  depth: 100
+  L: 100
+  A: 40
+  depth: 40
+  doIfft: 1
 --- !u!4 &590768245
 Transform:
   m_ObjectHideFlags: 0
@@ -376,7 +377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oceanMap: {fileID: 590768244}
-  viewType: 1
+  viewType: 0
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -435,7 +436,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2007966570
 Transform:
   m_ObjectHideFlags: 0
@@ -466,7 +467,7 @@ MonoBehaviour:
   meshFilter: {fileID: 2007966572}
   oceanMapGenerator: {fileID: 590768244}
   oceanShader: {fileID: 4800000, guid: 1de2ff53550f6a84baed4ca8751234c0, type: 3}
-  size: 1
+  size: 10
 --- !u!33 &2007966572
 MeshFilter:
   m_ObjectHideFlags: 0

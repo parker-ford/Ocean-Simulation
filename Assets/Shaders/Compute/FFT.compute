@@ -74,18 +74,7 @@ void CS_PrecomputeButtefly(uint3 id : SV_DispatchThreadID)
 void CS_HorzontalStepIFFT(uint3 id : SV_DispatchThreadID)
 {
 	_Target[id.xy] = FFT(id.x, _Target[id.xy]);
-
-    // float4 data = _Butterfly[uint2(_Step, id.x)];
-	// uint2 inputsIndices = (uint2)data.ba;
-
-	// if (_PingPongFlag)
-	// {
-	// 	_PingPong1[id.xy] = _PingPong0[uint2(inputsIndices.x, id.y)] + ComplexMult(float2(data.r, -data.g), _PingPong0[uint2(inputsIndices.y, id.y)]);
-	// }
-	// else
-	// {
-	// 	_PingPong0[id.xy] = _PingPong1[uint2(inputsIndices.x, id.y)] + ComplexMult(float2(data.r, -data.g), _PingPong1[uint2(inputsIndices.y, id.y)]);
-	// }
+    // _Target[id.xy] = float4(1,0,0,1);
 
 }
 
@@ -93,17 +82,8 @@ void CS_HorzontalStepIFFT(uint3 id : SV_DispatchThreadID)
 void CS_VerticalStepIFFT(uint3 id : SV_DispatchThreadID)
 {
 	_Target[id.yx] = FFT(id.x, _Target[id.yx]);
+    // _Target[id.xy] = float4(1,0,0,1);
 
-    // float4 data = _Butterfly[uint2(_Step, id.y)];
-	// uint2 inputsIndices = (uint2)data.ba;
-	// if (_PingPongFlag)
-	// {
-	// 	_PingPong1[id.xy] = _PingPong0[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), _PingPong0[uint2(id.x, inputsIndices.y)]);
-	// }
-	// else
-	// {
-	// 	_PingPong0[id.xy] = _PingPong1[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), _PingPong1[uint2(id.x, inputsIndices.y)]);
-	// }
 }
 
 [numthreads(8, 1, 1)]
@@ -118,10 +98,19 @@ void CS_PostProcess(uint3 id : SV_DispatchThreadID)
 {
 	float4 val = _Target[id.xy];
 	if(_Scale){
-		val /= SIZE * SIZE;
+		// val /= SIZE * SIZE;
+        val.r = val.r / (512.0 * 2);
+        val.g = val.g / (512.0 * 2);
 	}
 	if(_Permute){
 		val *= 1.0 - 2.0 * ((id.x + id.y) % 2);
 	}
-	_Target[id.xy] = val;
+    // val.a = 1;
+    _Target[id.xy] = val;
+    // if(val.r == 0 || val.g == 0){
+    //     _Target[id.xy] = float4(1,0,1,1);
+    // }
+    // else{
+    //     _Target[id.xy] = val * -10000;
+    // }
 }

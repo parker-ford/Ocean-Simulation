@@ -41,6 +41,7 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
                 break;
             case ViewType.InitialFreq:
                 Graphics.Blit(source, destination, viewFloat4RG);
+                // Graphics.Blit(oceanMap.initialSpectrum, destination);
                 break;
             case ViewType.WavesData:
                 Graphics.Blit(oceanMap.wavesData, destination);

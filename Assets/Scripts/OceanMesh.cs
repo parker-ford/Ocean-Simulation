@@ -92,7 +92,7 @@ public class OceanMesh : MonoBehaviour
     {
 
         oceanMaterial = new Material(oceanShader);
-        // oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.height_buffer);
+        oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.initialSpectrum);
         GetComponent<MeshRenderer>().material = oceanMaterial;
 
         vertices = generateMeshVerticesPlane((int)oceanMapGenerator.mapResolution, (int)oceanMapGenerator.mapResolution, size, size);
