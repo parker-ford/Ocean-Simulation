@@ -160,7 +160,7 @@ MonoBehaviour:
   lengthScale: 100
   amplitude: 40
   depth: 40
-  doIfft: 0
+  doIfft: 1
   lowPass: 1
   highPass: 14
 --- !u!4 &590768245
@@ -359,8 +359,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.23420444, y: -0.0049840063, z: 0.0011004325, w: 0.972174}
+  m_LocalPosition: {x: 0.6026182, y: 6.7148666, z: -12.376465}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -379,7 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oceanMap: {fileID: 590768244}
-  viewType: 1
+  viewType: 0
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -430,15 +430,15 @@ GameObject:
   m_Component:
   - component: {fileID: 2007966570}
   - component: {fileID: 2007966572}
-  - component: {fileID: 2007966571}
   - component: {fileID: 2007966573}
+  - component: {fileID: 2007966571}
   m_Layer: 0
   m_Name: OceanMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2007966570
 Transform:
   m_ObjectHideFlags: 0
@@ -469,7 +469,7 @@ MonoBehaviour:
   meshFilter: {fileID: 2007966572}
   oceanMapGenerator: {fileID: 590768244}
   oceanShader: {fileID: 4800000, guid: 1de2ff53550f6a84baed4ca8751234c0, type: 3}
-  size: 10
+  meshLength: 10
 --- !u!33 &2007966572
 MeshFilter:
   m_ObjectHideFlags: 0
