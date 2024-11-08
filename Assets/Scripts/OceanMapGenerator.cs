@@ -32,6 +32,8 @@ public class OceanMapGenerator : MonoBehaviour
     public float A = 1;
     public float depth = 1;
     public bool doIfft = false;
+    public float lowPass = 0.0f;
+    public float highPass = 1.0f;
 
 
     [NonSerialized]
@@ -164,7 +166,7 @@ public class OceanMapGenerator : MonoBehaviour
         fftShader.SetTexture(KERNEL_VERTICAL_IFFT, "_Target", input);
         fftShader.Dispatch(KERNEL_VERTICAL_IFFT, 1, size, 1);
 
-        fftShader.SetBool("_Scale", true);
+        fftShader.SetBool("_Scale", false);
         fftShader.SetBool("_Permute", true);
         fftShader.SetTexture(KERNEL_POST_PROCESS, "_Target", input);
         fftShader.Dispatch(KERNEL_POST_PROCESS, size, size, 1);
@@ -205,6 +207,8 @@ public class OceanMapGenerator : MonoBehaviour
         oceanographicSpectraShader.SetVector("_WindDirection", windDirection);
         oceanographicSpectraShader.SetFloat("_Depth", depth);
         oceanographicSpectraShader.SetFloat("_Lambda", 1);
+        oceanographicSpectraShader.SetFloat("_LowPass", lowPass);
+        oceanographicSpectraShader.SetFloat("_HighPass", highPass);
     }
 
 
@@ -255,14 +259,14 @@ public class OceanMapGenerator : MonoBehaviour
         SetSpectrumUniforms();
         oceanographicSpectraShader.Dispatch(KERNEL_INIT_SPECTRUM, 512, 512, 1);
         oceanographicSpectraShader.Dispatch(KERNEL_CONJUGATE_SPECTRUM, 512, 512, 1);
-        // oceanographicSpectraShader.Dispatch(KERNEL_UPDATE_SPECTRUM, 512, 512, 1);
+        oceanographicSpectraShader.Dispatch(KERNEL_UPDATE_SPECTRUM, 512, 512, 1);
         if (doIfft)
         {
-            IFFT(initialSpectrum);
-            // IFFT(spectrumDxDz);
-            // IFFT(spectrumDyDxy);
-            // IFFT(spectrumDyxDyz);
-            // IFFT(spectrumDxxDzz);
+            // IFFT(initialSpectrum);
+            IFFT(spectrumDxDz);
+            IFFT(spectrumDyDxy);
+            IFFT(spectrumDyxDyz);
+            IFFT(spectrumDxxDzz);
         }
     }
 

@@ -13,7 +13,7 @@ RWTexture2D<float2> _SpectrumDxDz, _SpectrumDyDxy, _SpectrumDyxDyz, _SpectrumDxx
 RWTexture2D<float4> _Displacement;
 
 uint _L, _MapSize;
-float _A, _WindSpeed, _Depth, _Lambda;
+float _A, _WindSpeed, _Depth, _Lambda, _LowPass, _HighPass;
 float2 _WindDirection;
 
 float4 GaussianRandom(float2 uv){
@@ -78,19 +78,26 @@ void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
     int nz = id.y - _MapSize / 2;
     float2 k = float2(nx, nz) * deltaK;
     float kLength = length(k);
-
-    float omega = Dispersion(kLength);
-    float dOmegak = DispersionDerivative(kLength);
-    _WavesData[id.xy] = float4(k.x, 1 / kLength, k.y, omega);
-
-    float spectrum = PhillipsSpectrum(k);
-    float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
-
-    //TODO: Investigate this and other spectrums
-    // float2 h0k = rand.xy * sqrt(2.0 * spectrum * abs(dOmegak) / kLength * deltaK * deltaK);
-    float2 h0k = rand.xy * sqrt(2.0 * spectrum);
     
-    _InitialSpectrum[id.xy] = float4(h0k, 0, 0);
+    if(kLength <= _HighPass && kLength >= _LowPass){
+
+        float omega = Dispersion(kLength);
+        float dOmegak = DispersionDerivative(kLength);
+        _WavesData[id.xy] = float4(k.x, 1 / kLength, k.y, omega);
+    
+        float spectrum = PhillipsSpectrum(k);
+        float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
+    
+        //TODO: Investigate this and other spectrums
+        // float2 h0k = rand.xy * sqrt(2.0 * spectrum * abs(dOmegak) / kLength * deltaK * deltaK);
+        float2 h0k = rand.xy * sqrt(2.0 * spectrum);
+        
+        _InitialSpectrum[id.xy] = float4(h0k, 0, 0);
+    }
+    else{
+        _InitialSpectrum[id.xy] = 0;
+        _WavesData[id.xy] = float4(k.x, 1, k.y, 0);
+    }
 
 }
 
