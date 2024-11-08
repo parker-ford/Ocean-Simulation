@@ -16,7 +16,8 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
         DxxDzz,
         Butterfly,
         Buffer,
-        Displacement
+        Displacement,
+        Slope
     }
     public OceanMapGenerator oceanMap;
     public ViewType viewType = ViewType.InitialFreq;
@@ -71,15 +72,9 @@ public class ApplyImageEffectOceanMap : MonoBehaviour
             case ViewType.Displacement:
                 Graphics.Blit(oceanMap.displacement, destination);
                 break;
-                // case ViewType.PingPong0:
-                //     Graphics.Blit(oceanMap.ping_pong0_buffer, destination);
-                //     break;
-                // case ViewType.PingPong1:
-                //     Graphics.Blit(oceanMap.ping_pong1_buffer, destination);
-                //     break;
-                // case ViewType.Height:
-                //     Graphics.Blit(oceanMap.height_buffer, destination);
-                //     break;
+            case ViewType.Slope:
+                Graphics.Blit(oceanMap.slope, destination);
+                break;
 
         }
     }

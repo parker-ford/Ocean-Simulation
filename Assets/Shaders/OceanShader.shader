@@ -37,16 +37,13 @@ Shader "Parker/OceanShader"
                 v2f o;
                 float3 displacement = tex2Dlod(_DisplacementTex, float4(v.uv,0,0)).rgb;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.vertex.y += displacement.g;
-                // o.vertex.xyz += displacement;
-                // o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.uv = v.uv;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float4 col = tex2D(_DisplacementTex, i.uv);
+                float4 col = float4(1,1,1,1);
                 return col;
             }
             ENDCG

@@ -10,10 +10,9 @@
 
 RWTexture2D<float4> _InitialSpectrum, _WavesData;
 RWTexture2D<float2> _SpectrumDxDz, _SpectrumDyDxy, _SpectrumDyxDyz, _SpectrumDxxDzz;
-RWTexture2D<float4> _Displacement;
-
-uint _L, _MapSize;
-float _A, _WindSpeed, _Depth, _Lambda, _LowPass, _HighPass;
+RWTexture2D<float4> _Displacement, _Slope;
+uint _LengthScale, _MapSize;
+float _Amplitude, _WindSpeed, _Depth, _Lambda, _LowPass, _HighPass;
 float2 _WindDirection;
 
 float4 GaussianRandom(float2 uv){
@@ -61,19 +60,17 @@ float2 PhillipsSpectrum(float2 k){
     float l2 = L2 * damping * damping;
 
     //TODO: think about removing A to general amplitude ?
-    float test =  _A * exp(-1.0 / (kLength2 * L2)) / kLength4 * kDotW2 * exp(-kLength2 * l2);
+    float test =  _Amplitude * exp(-1.0 / (kLength2 * L2)) / kLength4 * kDotW2 * exp(-kLength2 * l2);
 
     //Why does this need to be clamped? Why sqrt(test) and / sqrt(2) ???? i dont know but it works
     return clamp(sqrt(test) / sqrt(2.0), -4000, 4000);
 
 }
 
-
-
-[numthreads(1,1,1)]
+[numthreads(8,8,1)]
 void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
 {
-    float deltaK = 2 * PI / _L;
+    float deltaK = 2 * PI / _LengthScale;
     int nx = id.x - _MapSize / 2;
     int nz = id.y - _MapSize / 2;
     float2 k = float2(nx, nz) * deltaK;
@@ -101,12 +98,11 @@ void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
 
 }
 
-[numthreads(1,1,1)]
+[numthreads(8,8,1)]
 void CS_ConjugateSpectrum(uint3 id : SV_DispatchThreadID){
     float2 h0k = _InitialSpectrum[id.xy].rg;
     float2 h0minusK = _InitialSpectrum[uint2((_MapSize - id.x) % _MapSize, (_MapSize - id.y) % _MapSize)];
     _InitialSpectrum[id.xy] = float4(h0k, h0minusK.x, -h0minusK.y);
-    // _InitialSpectrum[id.xy] = float4(0,0,1,0);
 }
 
 [numthreads(8,8,1)]
@@ -138,7 +134,6 @@ void CS_UpdateSpectrum(uint3 id: SV_DispatchThreadID)
     //Dxx_Dzz
     _SpectrumDxxDzz[id.xy] = float2(displacementX_dx.x - displacementZ_dz.y, displacementX_dx.y + displacementZ_dz.x);
 
-    // float2 h = ComplexMult()
 }
 
 [numthreads(8,8,1)]
@@ -150,5 +145,5 @@ void CS_Assemble(uint3 id: SV_DispatchThreadID)
     float2 DxxDzz = _SpectrumDxxDzz[id.xy];
 
     _Displacement[id.xy] = float4(_Lambda * DxDz.x, DyDxy.x, _Lambda * DxDz.y, 1.0);
-    // _Displacement[id.xy] = float4(DxDz, 0, 1.0);
+    _Slope[id.xy] = float4(DyxDyz, DxxDzz * _Lambda);
 }
