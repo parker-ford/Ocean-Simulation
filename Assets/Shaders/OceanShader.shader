@@ -38,18 +38,27 @@ Shader "Parker/OceanShader"
             v2f vert (appdata v)
             {
                 v2f o;
-                float3 displacement = tex2Dlod(_DisplacementTex, float4(v.uv,0,0)).rgb;
+
+                float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                float4 worldUV = float4(worldPos.xz, 0, 0);
+                o.uv = worldUV.xy;
+
+                float3 viewVector = _WorldSpaceCameraPos.xyz - mul(unity_ObjectToWorld, v.vertex).xyz;
+                float viewDist = length(viewVector);
+                float lod_c = min(7.0 * 15.0 / viewDist, 1);
+
+                float3 displacement = tex2Dlod(_DisplacementTex, worldUV / 100.0).rgb;
                 // float3 displacement = tex2Dlod(_DisplacementTex, float4(v.uv,0,0)).rgb;
                 v.vertex.xyz += mul(unity_WorldToObject, displacement.xyz);
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float2 slope = tex2D(_SlopeTex, i.uv);
+                float2 slope = tex2D(_SlopeTex, i.uv / 100.0);
                 float3 normal = normalize(float3(-slope.x, 1.0, -slope.y));
+                
                 normal = normalize(UnityObjectToWorldNormal(normalize(normal)));
 
                 return float4(normal, 1.0);
