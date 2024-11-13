@@ -157,12 +157,21 @@ MonoBehaviour:
   fftShader: {fileID: 7200000, guid: 902f8fa327aab2b48bbd153e698976fb, type: 3}
   windSpeed: 40
   windDirection: {x: 1, y: 1}
-  lengthScale: 100
+  lengthScale: 15
   amplitude: 40
   depth: 40
   doIfft: 1
-  lowPass: 1
-  highPass: 14
+  lowPass: 0.001
+  highPass: 256
+  display:
+    scale: 1
+    windSpeed: 10
+    windDirection: 0.5
+    fetch: 100000
+    spreadBlend: 0.5
+    swell: 0
+    peakEnhancement: 0.1
+    shortWavesFade: 0.01
 --- !u!4 &590768245
 Transform:
   m_ObjectHideFlags: 0
@@ -469,7 +478,8 @@ MonoBehaviour:
   meshFilter: {fileID: 2007966572}
   oceanMapGenerator: {fileID: 590768244}
   oceanShader: {fileID: 4800000, guid: 1de2ff53550f6a84baed4ca8751234c0, type: 3}
-  meshLength: 10
+  sun: {fileID: 705507994}
+  meshLength: 15
 --- !u!33 &2007966572
 MeshFilter:
   m_ObjectHideFlags: 0

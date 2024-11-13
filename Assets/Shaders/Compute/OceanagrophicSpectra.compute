@@ -15,6 +15,20 @@ uint _LengthScale, _MapSize;
 float _Amplitude, _WindSpeed, _Depth, _Lambda, _LowPass, _HighPass;
 float2 _WindDirection;
 
+struct SpectrumParameters
+{
+    float scale;
+    float angle;
+    float spreadBlend;
+    float swell;
+    float alpha;
+    float peakOmega;
+    float gamma;
+    float shortWaveFade;
+};
+
+StructuredBuffer<SpectrumParameters> _Spectrum;
+
 float4 GaussianRandom(float2 uv){
     //TODO: Try sampling noise texture rather than generating
     float n0 = clamp(whiteNoise_2D(uv, 1), 0.001, 1.0);
@@ -67,6 +81,35 @@ float2 PhillipsSpectrum(float2 k){
 
 }
 
+//TODO: ???
+float TMACorrection(float omega){
+    float omegaH = omega * sqrt(_Depth / GRAVITY);
+    if(omegaH <= 1){
+        return 0.5 * omegaH * omegaH;
+    }
+    if(omegaH < 2){
+        return 1.0 - 0.5 * (2.0 - omegaH) * (2.0 - omegaH);
+    }
+    return 1;
+}
+
+float JONSWAP(float omega){
+    float sigma;
+    if(omega <= _Spectrum[0].peakOmega){
+        sigma = 0.07;
+    }
+    else {
+        sigma = 0.09;
+    }
+    float r = exp(-(omega - _Spectrum[0].peakOmega) * (omega - _Spectrum[0].peakOmega) / 2 / sigma / sigma / _Spectrum[0].peakOmega / _Spectrum[0].peakOmega);
+    float oneOverOmega = 1 / omega;
+    float peakOmegaOverOmega = _Spectrum[0].peakOmega / omega;
+    return _Spectrum[0].scale * TMACorrection(omega) * _Spectrum[0].alpha * GRAVITY * GRAVITY
+		* oneOverOmega * oneOverOmega * oneOverOmega * oneOverOmega * oneOverOmega
+		* exp(-1.25 * peakOmegaOverOmega * peakOmegaOverOmega * peakOmegaOverOmega * peakOmegaOverOmega)
+		* pow(abs(_Spectrum[0].gamma), r);
+}
+
 [numthreads(8,8,1)]
 void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
 {
@@ -78,16 +121,18 @@ void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
     
     if(kLength <= _HighPass && kLength >= _LowPass){
 
+        //TODO: Understand omega
         float omega = Dispersion(kLength);
         float dOmegak = DispersionDerivative(kLength);
         _WavesData[id.xy] = float4(k.x, 1 / kLength, k.y, omega);
     
-        float spectrum = PhillipsSpectrum(k);
+        // float spectrum = PhillipsSpectrum(k);
+        float spectrum = JONSWAP(omega);
         float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
     
         //TODO: Investigate this and other spectrums
-        // float2 h0k = rand.xy * sqrt(2.0 * spectrum * abs(dOmegak) / kLength * deltaK * deltaK);
-        float2 h0k = rand.xy * sqrt(2.0 * spectrum);
+        float2 h0k = rand.xy * sqrt(2.0 * spectrum * abs(dOmegak) / kLength * deltaK * deltaK);
+        // float2 h0k = rand.xy * sqrt(2.0 * spectrum);
         
         _InitialSpectrum[id.xy] = float4(h0k, 0, 0);
     }

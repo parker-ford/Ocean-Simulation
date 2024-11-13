@@ -67,7 +67,7 @@ void CS_PostProcess(uint3 id : SV_DispatchThreadID)
 {
 	float4 val = _Target[id.xy];
 	if(_Scale){
-		val /= (float)(SIZE);
+		val /= (float)(SIZE) * (float)(SIZE);
 	}
 	if(_Permute){
 		val *= 1.0 - 2.0 * ((id.x + id.y) % 2);

@@ -62,6 +62,36 @@ public class OceanMapGenerator : MonoBehaviour
     int KERNEL_POST_PROCESS;
     int KERNEL_ASSEMBLE;
 
+    [Serializable]
+    public struct DisplaySpectrumSettings
+    {
+        [Range(0, 1)]
+        public float scale;
+        public float windSpeed;
+        public float windDirection;
+        public float fetch;
+        [Range(0, 1)]
+        public float spreadBlend;
+        [Range(0, 1)]
+        public float swell;
+        public float peakEnhancement;
+        public float shortWavesFade;
+    }
+    public struct SpectrumSettings
+    {
+        public float scale;
+        public float angle;
+        public float spreadBlend;
+        public float swell;
+        public float alpha;
+        public float peakOmega;
+        public float gama;
+        public float shortWavesFade;
+    }
+
+    public DisplaySpectrumSettings display;
+    private SpectrumSettings[] settings = new SpectrumSettings[1];
+    private ComputeBuffer settingsBuffer;
 
     RenderTexture CreateRenderTexture(int width, int height, RenderTextureFormat format, bool useMipMaps = false)
     {
@@ -113,6 +143,17 @@ public class OceanMapGenerator : MonoBehaviour
         displacement = CreateRenderTexture(size, size, RenderTextureFormat.ARGBFloat);
         slope = CreateRenderTexture(size, size, RenderTextureFormat.ARGBFloat);
     }
+
+    float JonswapAlpha(float g, float fetch, float windSpeed)
+    {
+        return 0.076f * Mathf.Pow(g * fetch / windSpeed / windSpeed, -0.22f);
+    }
+
+    float JonswapPeakFrequency(float g, float fetch, float windSpeed)
+    {
+        return 22 * Mathf.Pow(windSpeed * fetch / g / g, -0.33f);
+    }
+
     void SetSpectrumUniforms()
     {
         oceanographicSpectraShader.SetInt("_LengthScale", lengthScale);
@@ -124,13 +165,31 @@ public class OceanMapGenerator : MonoBehaviour
         oceanographicSpectraShader.SetFloat("_Lambda", 1);
         oceanographicSpectraShader.SetFloat("_LowPass", lowPass);
         oceanographicSpectraShader.SetFloat("_HighPass", highPass);
+
+        settings[0].scale = display.scale;
+        settings[0].angle = display.windDirection / 180.0f * Mathf.PI;
+        settings[0].spreadBlend = display.spreadBlend;
+        settings[0].swell = Mathf.Clamp(display.swell, 0.01f, 1);
+        //TODO: Implement user controlled gravity
+        settings[0].alpha = JonswapAlpha(9.81f, display.fetch, display.windSpeed);
+        settings[0].peakOmega = JonswapPeakFrequency(9.81f, display.fetch, display.windSpeed);
+        settings[0].gama = display.peakEnhancement;
+        settings[0].shortWavesFade = display.shortWavesFade;
+
+        settingsBuffer.SetData(settings);
+        oceanographicSpectraShader.SetBuffer(KERNEL_INIT_SPECTRUM, "_Spectrum", settingsBuffer);
+
     }
+
+
 
     void Awake()
     {
         size = (int)mapResolution;
         logSize = (int)Mathf.Log(size, 2.0f);
         threadGroups = Mathf.CeilToInt(size / 8.0f);
+
+        settingsBuffer = new ComputeBuffer(1, 8 * sizeof(float));
 
         SetKernelIDs();
         InitializeRenderTextures();
@@ -189,6 +248,9 @@ public class OceanMapGenerator : MonoBehaviour
         buffer.Release();
         displacement.Release();
         slope.Release();
+
+
+        settingsBuffer.Dispose();
     }
 
 }
