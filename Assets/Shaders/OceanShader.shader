@@ -50,7 +50,7 @@ Shader "Parker/OceanShader"
 
                 float3 displacement = tex2Dlod(_DisplacementTex, worldUV / 100.0).rgb;
                 // float3 displacement = tex2Dlod(_DisplacementTex, float4(v.uv,0,0)).rgb;
-                v.vertex.xyz += mul(unity_WorldToObject, displacement.xyz);
+                // v.vertex.xyz += mul(unity_WorldToObject, displacement.xyz);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 return o;
             }
@@ -62,9 +62,11 @@ Shader "Parker/OceanShader"
                 
                 normal = normalize(UnityObjectToWorldNormal(normalize(normal)));
 
+                // return
+
                 // return float4(normal, 1.0);
 
-                // return float4(i.uv, 0.0, 1.0);
+                return float4(i.uv, 0.0, 1.0);
 
                 // float ndotl = DotClamped(_LightDir, normal);
 
