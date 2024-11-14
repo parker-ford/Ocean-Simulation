@@ -41,7 +41,8 @@ Shader "Parker/OceanShader"
 
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
                 float4 worldUV = float4(worldPos.xz, 0, 0);
-                o.uv = worldUV.xy;
+                // o.uv = worldUV.xy;
+                o.uv = v.uv;
 
                 float3 viewVector = _WorldSpaceCameraPos.xyz - mul(unity_ObjectToWorld, v.vertex).xyz;
                 float viewDist = length(viewVector);
@@ -61,7 +62,9 @@ Shader "Parker/OceanShader"
                 
                 normal = normalize(UnityObjectToWorldNormal(normalize(normal)));
 
-                return float4(normal, 1.0);
+                // return float4(normal, 1.0);
+
+                // return float4(i.uv, 0.0, 1.0);
 
                 // float ndotl = DotClamped(_LightDir, normal);
 

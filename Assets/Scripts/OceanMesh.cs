@@ -15,18 +15,22 @@ public class OceanMesh : MonoBehaviour
     public int meshLength = 10;
     private Mesh mesh;
     private Material oceanMaterial;
+    public int sideSegments;
 
     // Start is called before the first frame update
     void Start()
     {
-        mesh = ProceduralMesh.Plane((int)oceanMapGenerator.mapResolution, (int)oceanMapGenerator.mapResolution, meshLength, meshLength);
+        mesh = ProceduralMesh.Plane(sideSegments, sideSegments);
         mesh.name = "Ocean Surface";
         GetComponent<MeshFilter>().mesh = mesh;
 
-        oceanMaterial = new Material(oceanShader);
-        oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.displacement);
-        oceanMaterial.SetTexture("_SlopeTex", oceanMapGenerator.slope);
-        oceanMaterial.SetVector("_LightDir", -sun.gameObject.transform.forward);
+        // oceanMaterial = new Material(oceanShader);
+        // oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.displacement);
+        // oceanMaterial.SetTexture("_SlopeTex", oceanMapGenerator.slope);
+        // oceanMaterial.SetVector("_LightDir", -sun.gameObject.transform.forward);
+
+        oceanMaterial = new Material(Shader.Find("Standard"));
+
         GetComponent<MeshRenderer>().material = oceanMaterial;
 
     }

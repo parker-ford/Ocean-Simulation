@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 public static class ProceduralMesh
 {
-    public static Mesh Plane(int xVertexCount, int zVertexCount, int xLength, int zLength)
+    public static Mesh Plane(int n, int m)
     {
         Mesh mesh = new Mesh
         {
@@ -13,42 +13,80 @@ public static class ProceduralMesh
             indexFormat = IndexFormat.UInt32,
         };
 
-        Vector3[] vertices = new Vector3[(xVertexCount + 1) * (zVertexCount + 1)];
+        Vector3[] vertices = new Vector3[(m + 1) * (n + 1) + n * m];
         Vector2[] uvs = new Vector2[vertices.Length];
         Vector4[] tangents = new Vector4[vertices.Length];
-        int[] triangles = new int[xVertexCount * zVertexCount * 6];
+        int[] triangles = new int[n * m * 4 * 3];
 
-        for (int x = 0, index = 0; x <= xVertexCount; x++)
+        //Generate Lattice Points
+        for (int z = 0, index = 0; z <= m; z++, index += n) // may need to be n + 1
         {
-            for (int z = 0; z <= zVertexCount; z++, index++)
+            for (int x = 0; x <= n; x++, index++)
             {
                 vertices[index] = new Vector3(
-                    ((float)x / xVertexCount * xLength) - (xLength / 2.0f),
+                    x,
                     0.0f,
-                    ((float)z / zVertexCount * zLength) - (zLength / 2.0f)
+                    -z
                 );
+                vertices[index].Scale(new Vector3(1.0f / m, 1.0f, 1.0f / n));
 
                 uvs[index] = new Vector2(
-                    (float)x / xVertexCount,
-                    (float)z / zVertexCount
+                    (float)x / m,
+                    (float)z / n
                 );
 
                 tangents[index] = new Vector4(1.0f, 0.0f, 0.0f, -1.0f);
             }
         }
 
-        for (int x = 0, triangleIndex = 0, vertexIndex = 0; x < xVertexCount; x++)
+        //Generate Center Points
+        for (int z = 0, index = n + 1; z < m; z++, index += n + 1) // may need to be n + 2
         {
-            for (int z = 0; z < zVertexCount; z++, triangleIndex += 6, vertexIndex++)
+            for (int x = 0; x < n; x++, index++)
             {
-                //Top Triangle
-                triangles[triangleIndex] = vertexIndex;
-                triangles[triangleIndex + 1] = vertexIndex + 1;
-                triangles[triangleIndex + 2] = vertexIndex + zVertexCount + 2;
-                //Bot Triangle
-                triangles[triangleIndex + 3] = vertexIndex;
-                triangles[triangleIndex + 4] = vertexIndex + zVertexCount + 2;
-                triangles[triangleIndex + 5] = vertexIndex + zVertexCount + 1;
+                vertices[index] = new Vector3(
+                    x + 0.5f,
+                    0.0f,
+                    -z - 0.5f
+                );
+                vertices[index].Scale(new Vector3(1.0f / m, 1.0f, 1.0f / n));
+
+                uvs[index] = new Vector2(
+                    ((float)x + 0.5f) / m,
+                    ((float)z + 0.5f) / n
+                );
+
+                tangents[index] = new Vector4(1.0f, 0.0f, 0.0f, -1.0f);
+            }
+        }
+
+
+        for (int z = 0, vertex = 0, index = 0; z < m; z++, vertex += (n + 1))
+        {
+            for (int x = 0; x < n; x++, vertex++)
+            {
+                int p1 = vertex;
+                int p2 = vertex + 1;
+                int p3 = vertex + n + n + 2;
+                int p4 = vertex + n + n + 1;
+                int c = vertex + n + 1;
+
+                triangles[index++] = p1;
+                triangles[index++] = p2;
+                triangles[index++] = c;
+
+                triangles[index++] = p2;
+                triangles[index++] = p3;
+                triangles[index++] = c;
+
+                triangles[index++] = p3;
+                triangles[index++] = p4;
+                triangles[index++] = c;
+
+                triangles[index++] = p4;
+                triangles[index++] = p1;
+                triangles[index++] = c;
+
             }
         }
 
