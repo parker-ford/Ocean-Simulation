@@ -39,11 +39,11 @@ Shader "Parker/OceanShader"
             float3 _CameraPosition;
             float _ClipMap_LevelHalfSize;
 
-            // float ModifiedManhattanDistance(float3 a, float3 b)
-            // {
-            //     float3 v = a - b;
-            //     return max(abs(v.x + v.z) + abs(v.x - v.z), abs(v.y)) * 0.5;
-            // }
+            float ModifiedManhattanDistance(float3 a, float3 b)
+            {
+                float3 v = a - b;
+                return max(abs(v.x + v.z) + abs(v.x - v.z), abs(v.y)) * 0.5;
+            }
 
             // float3 ClipMapVertex(float3 position, float2 uv){
             //     float3 morphOffset = float3(uv.x, 0, uv.y);
@@ -62,13 +62,27 @@ Shader "Parker/OceanShader"
 
             float3 ClipMapVertex(float3 position, float2 uv){
 
-                float y = position.y;
+                float3 morphOffset = float3(uv.x, 0, uv.y);
                 position *= _ClipMap_Scale;
                 float3 meshScale = position.y;
                 float step = meshScale * 4;
 
+                // Snapes mesh to grid points to avoid translation artifacts
                 float3 snappedViewerPos = float3(floor(_CameraPosition.x / step) * step, 0, floor(_CameraPosition.z / step) * step);
                 float3 worldPos = float3(snappedViewerPos.x + position.x, 0, snappedViewerPos.z + position.z);
+
+                // Distance at which morphing begins. Can the 8 be changed? Look into this
+                float morphStart = ((_ClipMap_LevelHalfSize + 1) * 0.5 + 8) * meshScale;
+                // Distance at which morphing ends
+	            float morphEnd = (_ClipMap_LevelHalfSize - 2) * meshScale;
+
+                // Calcualtes the distance from the current world position to the camera. Accounts for height of camera
+                float distance = ModifiedManhattanDistance(worldPos, _CameraPosition);
+
+                // Value from 0 to 1 determing how much the world position will morph
+                float t = saturate((distance - morphStart) / (morphEnd - morphStart));
+
+                worldPos += morphOffset * meshScale * t;
 
                 return worldPos;
             }
@@ -78,7 +92,7 @@ Shader "Parker/OceanShader"
                 v2f o;
 
 
-                // float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
+                // float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
                 float4 worldPos = float4(ClipMapVertex(v.vertex.xyz, v.uv), 1.0);
                 float4 worldUV = float4(worldPos.xz, 0, 0);
                 o.uv = worldUV.xy;

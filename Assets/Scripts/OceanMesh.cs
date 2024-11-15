@@ -46,6 +46,7 @@ public class OceanMesh : MonoBehaviour
         //TODO: Find a better place for this
         Shader.SetGlobalVector("_CameraPosition", Camera.main.transform.position);
         Shader.SetGlobalFloat("_ClipMap_Scale", clipmapScale);
+        Shader.SetGlobalFloat("_ClipMap_LevelHalfSize", (vertexDensity + 1) * 4 - 1);
     }
 
     void OnApplicationQuit()

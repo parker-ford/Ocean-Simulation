@@ -86,7 +86,7 @@ public static class ProceduralMesh
             pivotIn: pivot,
             offsetUvs: true,
             morphShiftX: false,
-            morphShiftZ: false,
+            morphShiftZ: shortMorphShift,
             setY: true
         );
         combine[1].transform = Matrix4x4.TRS(Vector3.forward * shortSide, Quaternion.identity, Vector3.one);
@@ -99,7 +99,7 @@ public static class ProceduralMesh
             pivotIn: pivot,
             offsetUvs: true,
             morphShiftX: false,
-            morphShiftZ: false,
+            morphShiftZ: !shortMorphShift,
             setY: true
         );
         combine[2].transform = Matrix4x4.TRS(Vector3.forward * (shortSide + longSide), Quaternion.identity, Vector3.one);
@@ -111,8 +111,8 @@ public static class ProceduralMesh
             triangulation: triangulation,
             pivotIn: pivot,
             offsetUvs: true,
-            morphShiftX: false,
-            morphShiftZ: false,
+            morphShiftX: shortMorphShift,
+            morphShiftZ: !shortMorphShift,
             setY: true
         );
         combine[3].transform = Matrix4x4.TRS(Vector3.forward * (shortSide + longSide) + Vector3.right * shortSide, Quaternion.identity, Vector3.one);
@@ -124,8 +124,8 @@ public static class ProceduralMesh
             triangulation: triangulation,
             pivotIn: pivot,
             offsetUvs: true,
-            morphShiftX: false,
-            morphShiftZ: false,
+            morphShiftX: !shortMorphShift,
+            morphShiftZ: !shortMorphShift,
             setY: true
         );
         combine[4].transform = Matrix4x4.TRS(Vector3.forward * (shortSide + longSide) + Vector3.right * (shortSide + longSide), Quaternion.identity, Vector3.one);
@@ -137,8 +137,8 @@ public static class ProceduralMesh
             triangulation: triangulation,
             pivotIn: pivot,
             offsetUvs: true,
-            morphShiftX: false,
-            morphShiftZ: false,
+            morphShiftX: !shortMorphShift,
+            morphShiftZ: shortMorphShift,
             setY: true
         );
         combine[5].transform = Matrix4x4.TRS(Vector3.forward * shortSide + Vector3.right * (shortSide + longSide), Quaternion.identity, Vector3.one);
@@ -150,7 +150,7 @@ public static class ProceduralMesh
             triangulation: triangulation,
             pivotIn: pivot,
             offsetUvs: true,
-            morphShiftX: false,
+            morphShiftX: !shortMorphShift,
             morphShiftZ: false,
             setY: true
         );
@@ -163,7 +163,7 @@ public static class ProceduralMesh
             triangulation: triangulation,
             pivotIn: pivot,
             offsetUvs: true,
-            morphShiftX: false,
+            morphShiftX: shortMorphShift,
             morphShiftZ: false,
             setY: true
         );
