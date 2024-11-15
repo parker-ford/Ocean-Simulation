@@ -179,6 +179,9 @@ public class OceanMapGenerator : MonoBehaviour
         settingsBuffer.SetData(settings);
         oceanographicSpectraShader.SetBuffer(KERNEL_INIT_SPECTRUM, "_Spectrum", settingsBuffer);
 
+
+        Shader.SetGlobalFloat("_LengthScale", lengthScale);
+
     }
 
 

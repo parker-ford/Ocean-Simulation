@@ -126,8 +126,8 @@ void CS_InitializeSpectrum (uint3 id : SV_DispatchThreadID)
         float dOmegak = DispersionDerivative(kLength);
         _WavesData[id.xy] = float4(k.x, 1 / kLength, k.y, omega);
     
-        // float spectrum = PhillipsSpectrum(k);
-        float spectrum = JONSWAP(omega);
+        float spectrum = PhillipsSpectrum(k);
+        // float spectrum = JONSWAP(omega);
         float4 rand = GaussianRandom(float2(id.xy) / (float)_MapSize);
     
         //TODO: Investigate this and other spectrums

@@ -15,9 +15,10 @@ public class OceanMesh : MonoBehaviour
     public int meshLength = 10;
     private Mesh mesh;
     private Material oceanMaterial;
-    public int clipmapScale;
+    public float clipmapScale;
     public int vertexDensity;
     public int clipmapLevels;
+    public float clipMapMorphDistance = 8.0f;
     public Texture2D testTexture;
 
     // Start is called before the first frame update
@@ -29,10 +30,9 @@ public class OceanMesh : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh;
 
         oceanMaterial = new Material(oceanShader);
-        oceanMaterial.SetTexture("_DisplacementTex", testTexture);
-        // oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.displacement);
-        // oceanMaterial.SetTexture("_SlopeTex", oceanMapGenerator.slope);
-        // oceanMaterial.SetVector("_LightDir", -sun.gameObject.transform.forward);
+        // oceanMaterial.SetTexture("_DisplacementTex", testTexture);
+        oceanMaterial.SetTexture("_DisplacementTex", oceanMapGenerator.displacement);
+        oceanMaterial.SetTexture("_SlopeTex", oceanMapGenerator.slope);
 
         // oceanMaterial = new Material(Shader.Find("Standard"));
 
@@ -47,6 +47,9 @@ public class OceanMesh : MonoBehaviour
         Shader.SetGlobalVector("_CameraPosition", Camera.main.transform.position);
         Shader.SetGlobalFloat("_ClipMap_Scale", clipmapScale);
         Shader.SetGlobalFloat("_ClipMap_LevelHalfSize", (vertexDensity + 1) * 4 - 1);
+        Shader.SetGlobalFloat("_ClipMap_MorphDistance", clipMapMorphDistance);
+        oceanMaterial.SetVector("_LightDir", -sun.gameObject.transform.forward);
+
     }
 
     void OnApplicationQuit()
