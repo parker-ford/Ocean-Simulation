@@ -155,6 +155,7 @@ Transform:
   - {fileID: 1286522476}
   - {fileID: 598554521}
   - {fileID: 1538306225}
+  - {fileID: 1281646883}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &590768243
@@ -509,8 +510,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.413716, y: 0.19793412, z: -0.09262437, w: 0.8837884}
-  m_LocalPosition: {x: -47.694027, y: 91.331436, z: -74.68247}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -537,7 +538,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32451548ef4843b4e91a110fb9e03e38, type: 3}
   m_Name: 
@@ -773,12 +774,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1281646879}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 359529727}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1286522475
 GameObject:
@@ -1045,9 +1046,10 @@ MonoBehaviour:
   oceanShader: {fileID: 4800000, guid: 1de2ff53550f6a84baed4ca8751234c0, type: 3}
   sun: {fileID: 705507994}
   meshLength: 16
-  sideSegments: 4
-  vertexDensity: 8
-  clipmapLevels: 3
+  clipmapScale: 12
+  vertexDensity: 20
+  clipmapLevels: 2
+  testTexture: {fileID: 2800000, guid: a8ce587d43c5c2b4d8f47b6fe1201f9b, type: 3}
 --- !u!33 &2007966572
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -1108,4 +1110,3 @@ SceneRoots:
   - {fileID: 2007966570}
   - {fileID: 1172108183}
   - {fileID: 359529727}
-  - {fileID: 1281646883}
